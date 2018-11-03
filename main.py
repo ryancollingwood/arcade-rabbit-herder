@@ -19,7 +19,7 @@ COLOUR_MAP = {
     Colour.LIGHT_BLUE.value: arcade.color.LIGHT_BLUE,
     Colour.LIGHT_GREEN.value: arcade.color.LIGHT_GREEN,
     Colour.MAROON.value: arcade.color.MAROON,
-    Colour.ORANGE.value: arcade.color.PINK,
+    Colour.ORANGE.value: arcade.color.ORANGE,
     Colour.PURPLE.value: arcade.color.PURPLE,
     Colour.RED.value: arcade.color.RED,
     Colour.TAN.value: arcade.color.TAN,
@@ -34,6 +34,7 @@ class MyGame(arcade.Window):
 
         arcade.set_background_color(arcade.color.BLACK)
 
+        self.game = None
         # If you have sprite lists, you should create them here,
         # and set them to None
 
