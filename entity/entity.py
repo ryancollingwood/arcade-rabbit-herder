@@ -39,6 +39,7 @@ class Entity:
         self.top_middle = None
         self.bottom_middle = None
         self.grid_pixels = None
+        self.clip_distance = None
         
         self.refresh_dimensions()
         
@@ -69,6 +70,7 @@ class Entity:
         self.middle_left = (self.x - self.half_width, self.y)
         self.middle = (self.x, self.y)
         self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
+        self.clip_distance = self.width * 0.8
 
         # again check for collision
         
@@ -88,7 +90,7 @@ class Entity:
                     return [other_entity]
         return []
 
-    def check_collision_point(self, search_x, search_y):      
+    def check_collision_point(self, search_x, search_y):
         # remove self from grid so we dont
         # find ourselves
         Entity.grid - self.id
@@ -98,7 +100,7 @@ class Entity:
             )
     
         # now add self back to grid
-        Entity.grid[self.x, self.x, self.id]
+        Entity.grid[self.x, self.y, self.id]
  
         if collision_items is not None:
             # print(self.id, collision_items)
@@ -109,7 +111,8 @@ class Entity:
                 if collision_item[0]:
                     if collision_item[0] == 0:
                         continue
-                    if collision_item[1] > self.width:
+
+                    if collision_item[1] > self.clip_distance:
                         continue
                     
                     return self.collide(collision_item[0])

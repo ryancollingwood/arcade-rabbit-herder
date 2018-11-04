@@ -128,7 +128,6 @@ class MyGame(arcade.Window):
 
         self.draw_entity(game.player)
 
-
         draw_grid = False
         if draw_grid:
             pass
@@ -243,7 +242,8 @@ class MyGame(arcade.Window):
         """
         Called when a user releases a mouse button.
         """
-        pass
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            self.game.debug_x_y(x, y)
 
 
 def main():

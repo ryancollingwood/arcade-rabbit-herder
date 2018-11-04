@@ -258,7 +258,6 @@ class MovableEntity(Entity):
             collision_item = self.check_collision_point(start_x, start_y)
         
             if len(collision_item) > 0:
-                #game_state.debug_message = str(collision_item[0].middle)
                 return collision_item
     
         return []
