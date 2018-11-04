@@ -6,18 +6,25 @@ from typing import Tuple
 
 class Grid():
     
-    def __init__(self, x_max, y_max, tile_size):
+    def __init__(self, x_max, y_max, tile_size, flip_x = False, flip_y = False):
         """
         Initiaise a grid
         :param x_max:
         :param y_max:
         :param tile_size:
+        :param flip_x:
+        :param flip_y:
         """
         
         # generate the indicies for our grid size
         # the indicies are the positions of our grid
         y_mesh, x_mesh = np.indices((y_max, x_max))
-        
+
+        if flip_x:
+            x_mesh = np.flip(x_mesh)
+        if flip_y:
+            y_mesh = np.flip(y_mesh)
+
         # we want to store the center value in pixels for
         # our tiles
         self.tile_size = tile_size

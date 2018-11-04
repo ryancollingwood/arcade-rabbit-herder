@@ -5,7 +5,7 @@ from consts import Keys
 
 
 class Game():
-    def __init__(self, width, height, tile_size, width_aspect_ratio):
+    def __init__(self, width, height, tile_size, width_aspect_ratio, flip_x = False, flip_y = False):
         self.width = width
         self.height = height
         self.tile_size = tile_size
@@ -18,7 +18,7 @@ class Game():
         self.score = 0
         self.game_message = ""
 
-        self.grid = Grid(width, height, tile_size)
+        self.grid = Grid(width, height, tile_size, flip_x, flip_y)
         
         MovableEntity.width_aspect_ratio = width_aspect_ratio
         Entity.grid = self.grid
@@ -63,14 +63,14 @@ class Game():
     def add_player(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("player:", x, y)
-        self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.05)
+        self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.10)
         self.player.movement_type = MovementType.CONTROLLED
         self.player.movement_speed = 5
 
     def add_rabbit(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("rabbit:", x, y)
-        self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 0.05, False, self.npcs)
+        self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 0.10, False, self.npcs)
 
     def remove_item(self, item):
         self.grid - item.id
@@ -140,7 +140,7 @@ class Game():
         return self.grid[x, y]
 
     def debug_x_y(self, x, y):
-        print(self.get_grid_data(x, y))
-        print(self.grid.query(
+        print("id:", self.get_grid_data(x, y))
+        print("nearby:", self.grid.query(
             x, y, k = 8, distance_upper_bound = self.tile_size * 2
         ))
