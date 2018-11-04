@@ -10,7 +10,7 @@ class Entity:
     def __init__(
         self,
         x: int, y: int, height: int, width: int,
-        base_colour: Colour, tick_rate: int = 5,
+        base_colour: Colour, tick_rate: float = 0.5,
         is_solid: bool = True, parent_collection: List = None
         ):
         
@@ -117,16 +117,20 @@ class Entity:
 
     def can_think(self, frame_count):
         if self.last_tick is None:
+            self.last_tick = frame_count
             return True
 
-        if frame_count - self.last_tick > self.tick_rate:
+        self.last_tick += frame_count
+        
+        if self.last_tick > self.tick_rate:
+            self.last_tick = 0
             return True
 
         return False
 
     def think(self, frame_count):
         if self.can_think(frame_count):
-            self.last_tick = frame_count
+            #self.last_tick = frame_count
             # this was added to get around current grid implementation
             # only support one thing in the data layer at a time
             self.refresh_dimensions()

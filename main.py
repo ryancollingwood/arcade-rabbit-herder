@@ -2,7 +2,7 @@
 import arcade
 
 from game import Game
-from entity import Entity
+from entity import Entity, MovementType, MovementDirection
 from consts.colour import Colour
 
 SCREEN_WIDTH = 800
@@ -31,6 +31,7 @@ class MyGame(arcade.Window):
 
     def __init__(self, width, height):
         super().__init__(width, height)
+        self.set_update_rate(1 / 20)
 
         arcade.set_background_color(arcade.color.BLACK)
 
@@ -92,6 +93,8 @@ class MyGame(arcade.Window):
             self.draw_entity(npc)
 
         del npcs
+
+        self.draw_entity(game.player)
             
         draw_wall_ids = False
 
@@ -140,6 +143,8 @@ class MyGame(arcade.Window):
             npc.think(delta_time)
         del npcs
 
+        game.player.think(delta_time)
+
     def on_key_press(self, key, modifiers):
         """
         Called whenever a key on the keyboard is pressed.
@@ -151,13 +156,13 @@ class MyGame(arcade.Window):
         rabbit = self.game.rabbit
 
         if key == arcade.key.LEFT:
-            player.move_left()
+            player.set_direction(MovementDirection.WEST)
         elif key == arcade.key.RIGHT:
-            player.move_right()
+            player.set_direction(MovementDirection.EAST)
         elif key == arcade.key.UP:
-            player.move_up()
+            player.set_direction(MovementDirection.NORTH)
         elif key == arcade.key.DOWN:
-            player.move_down()
+            player.set_direction(MovementDirection.SOUTH)
         # debug stuffs
         elif key == arcade.key.PERIOD:
             player.tick_rate -= 1
@@ -187,11 +192,20 @@ class MyGame(arcade.Window):
         elif key == arcade.key.X:
             self.game.start_rabbit()
 
-    def on_release(self, key, modifiers):
+    def on_key_release(self, key, modifiers):
         """
         Called whenever the user lets off a previously pressed key.
         """
-        pass
+        player = self.game.player
+        
+        if key == arcade.key.LEFT:
+            player.set_direction(MovementDirection.NONE)
+        elif key == arcade.key.RIGHT:
+            player.set_direction(MovementDirection.NONE)
+        elif key == arcade.key.UP:
+            player.set_direction(MovementDirection.NONE)
+        elif key == arcade.key.DOWN:
+            player.set_direction(MovementDirection.NONE)
 
     def on_mouse_motion(self, x, y, delta_x, delta_y):
         """

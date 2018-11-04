@@ -63,12 +63,13 @@ class Game():
     def add_player(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("player:", x, y)
-        self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 5)
+        self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.005)
+        self.player.movement_type = MovementType.CONTROLLED
 
     def add_rabbit(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("rabbit:", x, y)
-        self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 5, False, self.npcs)
+        self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 0.005, False, self.npcs)
 
     def remove_item(self, item):
         self.grid - item.id
@@ -81,7 +82,9 @@ class Game():
         item.on_collide = self.apply_speed_down
 
     def apply_speed_down(self, apply_from, apply_to):
-        apply_to.tick_rate += 1
+        modifier = apply_to.tick_rate/2
+        apply_to.tick_rate += modifier
+
         self.remove_item(apply_from)
 
     def add_speed_up(self, row, column):
@@ -90,7 +93,8 @@ class Game():
         item.on_collide = self.apply_speed_up
 
     def apply_speed_up(self, apply_from, apply_to):
-        apply_to.tick_rate -= 1
+        modifier = apply_to.tick_rate/2
+        apply_to.tick_rate -= modifier
         self.remove_item(apply_from)
 
     def add_carrot(self, row, column):

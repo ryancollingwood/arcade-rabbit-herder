@@ -7,8 +7,9 @@ from enum import Enum
 
 class MovementType(Enum):
     NONE = 0
-    PATROL = 1
-    CHASE = 2
+    CONTROLLED = 1
+    PATROL = 2
+    CHASE = 3
 
 
 class MovementDirection(Enum):
@@ -26,6 +27,13 @@ class MovementDirection(Enum):
 class MovableEntity(Entity):
     
     width_aspect_ratio = 1
+
+    direction_magnitues = {
+        MovementDirection.NORTH : (0,-1),
+        MovementDirection.SOUTH : (0,1),
+        MovementDirection.EAST: (1,0),
+        MovementDirection.WEST: (-1,0),
+    }
 
     def __init__(self,
                  x: int, y: int, height: int, width: int,
@@ -63,6 +71,13 @@ class MovableEntity(Entity):
         if self.movement_type == MovementType.CHASE:
             destination_entity = Entity.all[self.target]
             self.destination = (destination_entity.x, destination_entity.y)
+        elif self.movement_type == MovementType.CONTROLLED:
+            movement_direction = self.movement_direction
+            if movement_direction == MovementDirection.NONE:
+                self.destination = None
+            else: 
+                magnitude = MovableEntity.direction_magnitues[movement_direction]
+                self.destination = (self.middle[0] + magnitude[0], self.middle[1] + magnitude[1])        
             
         if self.destination is None:
             return result
@@ -161,6 +176,9 @@ class MovableEntity(Entity):
             return True, destination_bounds
         
         return False, destination_bounds
+
+    def set_direction(self, direction: MovementDirection):
+        self.movement_direction = direction
 
     def move_left(self):
         """
