@@ -50,7 +50,11 @@ class MovableEntity(Entity):
         self.target = target
         self.target_offset = target_offset
         self.movement_direction = MovementDirection.NONE
+        self.last_movement_direction = None
         self.movement_speed = 1
+        self.acceleration = 0
+        self.max_acceleration = 1
+        self.acceleration_rate = 0.01
         
     def think(self, frame_count):
         """
@@ -180,35 +184,54 @@ class MovableEntity(Entity):
         return False, destination_bounds
 
     def set_direction(self, direction: MovementDirection):
+
+        if direction != self.last_movement_direction:
+            self.last_movement_direction = direction
+            self.acceleration = 0
+
         self.movement_direction = direction
+
+    def get_effective_speed(self):
+        if self.movement_direction != MovementDirection.NONE:
+            self.acceleration += self.movement_speed * self.acceleration_rate
+
+        if self.acceleration > self.max_acceleration:
+            self.acceleration = self.max_acceleration
+
+        return (1 * self.movement_speed) + self.acceleration
 
     def move_left(self):
         """
         Move left on screen
         :return:
         """
-        return self.move_in_direction(-1 * self.movement_speed, 0)
+        speed = self.get_effective_speed()
+        return self.move_in_direction(-1 * speed, 0)
+
 
     def move_right(self):
         """
         Move right on screen
         :return:
         """
-        return self.move_in_direction(1 * self.movement_speed, 0)
+        speed = self.get_effective_speed()
+        return self.move_in_direction(speed, 0)
 
     def move_up(self):
         """
         Move up on screen
         :return:
         """
-        return self.move_in_direction(0, -1 * self.movement_speed)
+        speed = self.get_effective_speed()
+        return self.move_in_direction(0, -1 * speed)
 
     def move_down(self):
         """
         Move down on screen
         :return:
         """
-        return self.move_in_direction(0, 1 * self.movement_speed)
+        speed = self.get_effective_speed()
+        return self.move_in_direction(0, speed)
 
     def move_in_direction(self, x_magnitude, y_magnitude):
         """

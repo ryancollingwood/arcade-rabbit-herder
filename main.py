@@ -110,6 +110,35 @@ class MyGame(arcade.Window):
         # Call draw() on all your sprite lists below
         self.shape_walls.draw()
 
+        if game.game_message != "":
+            arcade.draw_text(
+                game.game_message,
+                (SCREEN_WIDTH // 2) - (len(game.game_message)*14),
+                SCREEN_HEIGHT - 2,
+                arcade.color.LIME_GREEN,
+                14,
+                align = "center",
+                anchor_y = "top"
+            )
+
+        scores = "Score: {a} - Herder Speed: {b} - Rabbit Speed: {c}".format(
+            a = game.score,
+            b = game.player.get_effective_speed(),
+            c = game.rabbit.get_effective_speed(),
+        )
+
+        #scores = "middle"
+
+        arcade.draw_text(
+            scores,
+            (SCREEN_WIDTH / 2) - (len(scores) * 22),
+            SCREEN_HEIGHT - 18,
+            arcade.color.WHITE,
+            14,
+            align="center",
+            #anchor_y="top"
+        )
+
         draw_item_ids = False
         items = game.items.copy()
         for item in items:
@@ -148,9 +177,7 @@ class MyGame(arcade.Window):
         """
         # Call draw() on all your sprite lists below
         game = self.game
-        walls = self.game.walls
 
-        draw_item_ids = False
         items = game.items.copy()
         for item in items:
             item.think(delta_time)
@@ -189,9 +216,6 @@ class MyGame(arcade.Window):
             player.tick_rate += 1
         elif key == arcade.key.R:
             self.game.load_level()
-        #elif key == arcade.key.LEFT_BUTTON:
-        #    self.game.debug_x_y(pyxel.mouse_x, pyxel.mouse_y)
-        # rabbit cheat
         elif key == arcade.key.W:
             rabbit.movement_type = MovementType.NONE
             rabbit.target = None

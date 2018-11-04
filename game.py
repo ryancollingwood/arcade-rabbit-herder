@@ -84,8 +84,11 @@ class Game():
 
     def apply_speed_down(self, apply_from, apply_to):
         modifier = apply_to.tick_rate/2
-        apply_to.movement_speed += modifier
-
+        try:
+            apply_to.movement_speed -= modifier
+        except AttributeError:
+            print("tried to apply speed down wrong thing?", apply_to)
+            return
         self.remove_item(apply_from)
 
     def add_speed_up(self, row, column):
@@ -95,7 +98,11 @@ class Game():
 
     def apply_speed_up(self, apply_from, apply_to):
         modifier = apply_to.tick_rate/2
-        apply_to.movement_speed -= modifier
+        try:
+            apply_to.movement_speed += modifier
+        except AttributeError:
+            print("tried to apply speed up wrong thing?", apply_to)
+            return
         self.remove_item(apply_from)
 
     def add_carrot(self, row, column):
@@ -118,6 +125,7 @@ class Game():
         if other.id != self.rabbit.id:
             return
         self.game_message = "YOU WIN! Press R to restart"
+        print(self.game_message)
 
     def start_rabbit(self):
         self.rabbit.target_offset = self.tile_size * 2
