@@ -38,10 +38,45 @@ class MyGame(arcade.Window):
         self.game = None
         # If you have sprite lists, you should create them here,
         # and set them to None
+        self.shape_walls = None
 
     def setup(self):
         # Create your sprites and sprite lists here
         self.game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 1)
+
+        self.shape_walls = arcade.ShapeElementList()
+
+        point_list = []
+        color_list = []
+
+        # create the walls into a single shape
+        walls = self.game.walls
+        for wall in walls:
+            points = self.get_entity_dimensions(wall)
+            point_list.append(points[0])
+            point_list.append(points[1])
+            point_list.append(points[2])
+            point_list.append(points[3])
+
+            for i in range(4):
+                color_list.append(COLOUR_MAP[wall.base_colour])
+
+        self.shape_walls.append(
+            arcade.create_rectangles_filled_with_colors(point_list, color_list)
+        )
+
+
+
+    def get_entity_dimensions(self, entity: Entity):
+        top_left = list(entity.top_left)
+        top_left[1] = SCREEN_HEIGHT - top_left[1]
+        top_right = list(entity.top_right)
+        top_right[1] = SCREEN_HEIGHT - top_right[1]
+        bottom_left = list(entity.bottom_left)
+        bottom_left[1] = SCREEN_HEIGHT - bottom_left[1]
+        bottom_right = list(entity.bottom_right)
+        bottom_right[1] = SCREEN_HEIGHT - bottom_right[1]
+        return (top_left, top_right, bottom_right, bottom_left)
 
     def draw_entity(self, entity: Entity):
 
@@ -49,7 +84,9 @@ class MyGame(arcade.Window):
         right = (entity.x + entity.half_width)
         # because arcade 0 on y is the bottom of the screen not the top
         bottom = abs((entity.y + entity.half_height) - SCREEN_HEIGHT)
+        #bottom = entity.y - entity.half_height - SCREEN_HEIGHT
         top = abs((entity.y - entity.half_height) - SCREEN_HEIGHT)
+        #top = entity.y + entity.half_height - SCREEN_HEIGHT
 
         arcade.draw_lrtb_rectangle_filled(
             left = left, 
@@ -68,9 +105,10 @@ class MyGame(arcade.Window):
         # the screen to the background color, and erase what we drew last frame.
         arcade.start_render()
 
-        # Call draw() on all your sprite lists below
         game = self.game
-        walls = self.game.walls
+
+        # Call draw() on all your sprite lists below
+        self.shape_walls.draw()
 
         draw_item_ids = False
         items = game.items.copy()
@@ -78,16 +116,10 @@ class MyGame(arcade.Window):
             item.think(0)
             self.draw_entity(item)
 
-            if draw_item_ids:
-                pyxel.text(
-                    item.top_left[0], 
-                    item.top_left[1], 
-                    str(item.id), 
-                    Colour.BLACK.value
-                    )
         del items
 
         npcs = game.npcs.copy()
+
         for npc in npcs:
             npc.think(0)
             self.draw_entity(npc)
@@ -95,19 +127,7 @@ class MyGame(arcade.Window):
         del npcs
 
         self.draw_entity(game.player)
-            
-        draw_wall_ids = False
 
-        for wall in walls:
-            self.draw_entity(wall)
-
-            if draw_wall_ids:
-                pass
-
-        # draw scores
-        # draw messages
-
-        self.draw_entity(game.player)
 
         draw_grid = False
         if draw_grid:
