@@ -44,11 +44,13 @@ class MovableEntity(Entity):
                  ):
         
         super().__init__(x, y, height, width, base_colour, tick_rate, is_solid, parent_collection)
+
         self.destination = None
         self.movement_type = movement_type
         self.target = target
         self.target_offset = target_offset
         self.movement_direction = MovementDirection.NONE
+        self.movement_speed = 1
         
     def think(self, frame_count):
         """
@@ -185,28 +187,28 @@ class MovableEntity(Entity):
         Move left on screen
         :return:
         """
-        return self.move_in_direction(-1, 0)
+        return self.move_in_direction(-1 * self.movement_speed, 0)
 
     def move_right(self):
         """
         Move right on screen
         :return:
         """
-        return self.move_in_direction(1, 0)
+        return self.move_in_direction(1 * self.movement_speed, 0)
 
     def move_up(self):
         """
         Move up on screen
         :return:
         """
-        return self.move_in_direction(0, -1)
+        return self.move_in_direction(0, -1 * self.movement_speed)
 
     def move_down(self):
         """
         Move down on screen
         :return:
         """
-        return self.move_in_direction(0, 1)
+        return self.move_in_direction(0, 1 * self.movement_speed)
 
     def move_in_direction(self, x_magnitude, y_magnitude):
         """

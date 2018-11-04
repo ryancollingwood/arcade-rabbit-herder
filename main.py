@@ -16,7 +16,7 @@ COLOUR_MAP = {
     Colour.DARK_GREY.value: arcade.color.DARK_GRAY,
     Colour.GREEN.value: arcade.color.GREEN,
     Colour.GREY.value: arcade.color.GRAY,
-    Colour.LIGHT_BLUE.value: arcade.color.LIGHT_BLUE,
+    Colour.LIGHT_BLUE.value: arcade.color.BABY_BLUE_EYES,
     Colour.LIGHT_GREEN.value: arcade.color.LIGHT_GREEN,
     Colour.MAROON.value: arcade.color.MAROON,
     Colour.ORANGE.value: arcade.color.ORANGE,

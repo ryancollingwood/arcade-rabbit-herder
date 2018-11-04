@@ -63,13 +63,14 @@ class Game():
     def add_player(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("player:", x, y)
-        self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.005)
+        self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.05)
         self.player.movement_type = MovementType.CONTROLLED
+        self.player.movement_speed = 5
 
     def add_rabbit(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("rabbit:", x, y)
-        self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 0.005, False, self.npcs)
+        self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 0.05, False, self.npcs)
 
     def remove_item(self, item):
         self.grid - item.id
@@ -83,7 +84,7 @@ class Game():
 
     def apply_speed_down(self, apply_from, apply_to):
         modifier = apply_to.tick_rate/2
-        apply_to.tick_rate += modifier
+        apply_to.movement_speed += modifier
 
         self.remove_item(apply_from)
 
@@ -94,7 +95,7 @@ class Game():
 
     def apply_speed_up(self, apply_from, apply_to):
         modifier = apply_to.tick_rate/2
-        apply_to.tick_rate -= modifier
+        apply_to.movement_speed -= modifier
         self.remove_item(apply_from)
 
     def add_carrot(self, row, column):
@@ -122,6 +123,7 @@ class Game():
         self.rabbit.target_offset = self.tile_size * 2
         self.rabbit.target = self.player.id
         self.rabbit.movement_type = MovementType.CHASE
+        self.rabbit.movement_speed = 3
 
     def add_wall(self, row, column):
         # add_at_grid_position
