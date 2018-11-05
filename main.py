@@ -123,7 +123,7 @@ class MyGame(arcade.Window):
                 anchor_y = "top"
             )
 
-        scores = "Score: {a} - Herder Speed: {b} - Rabbit Speed: {c}".format(
+        scores = "Score: {a} - Herder Speed: {b:.2f} - Rabbit Speed: {c:.2f}".format(
             a = game.score,
             b = game.player.update_effective_speed(),
             c = game.rabbit.update_effective_speed(),

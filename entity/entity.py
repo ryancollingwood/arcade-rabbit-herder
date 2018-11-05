@@ -110,6 +110,9 @@ class Entity:
     def get_point_for_approaching_direction(self, direction: MovementDirection):
         return self.get_point_for_direction(DIRECTION_INVERSE[direction])
 
+    def get_tick_rate(self):
+        return self.tick_rate
+
     def can_think(self, frame_count):
         if self.last_tick is None:
             self.last_tick = frame_count
@@ -117,7 +120,7 @@ class Entity:
 
         self.last_tick += frame_count
         
-        if self.last_tick > self.tick_rate:
+        if self.last_tick > self.get_tick_rate():
             self.last_tick = 0
             return True
 

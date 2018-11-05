@@ -230,7 +230,7 @@ class MovableEntity(Entity):
     
         collide_entities = self.collide_entities(new_direction, x_magnitude, y_magnitude)
         if collide_entities is not None and len(collide_entities) == 0:
-            self.movement_direction = new_direction
+            self.set_direction(new_direction)
             self.x = (self.x + x_magnitude) #% MovableEntity.width_aspect_ratio
             self.y = (self.y + y_magnitude) #% MovableEntity.width_aspect_ratio
             result = True
