@@ -48,6 +48,8 @@ class MyGame(arcade.Window):
 
         self.shape_walls = arcade.ShapeElementList()
 
+        self.game.game_message = "Lead the Rabbit home"
+
         point_list = []
         color_list = []
 
@@ -66,8 +68,6 @@ class MyGame(arcade.Window):
         self.shape_walls.append(
             arcade.create_rectangles_filled_with_colors(point_list, color_list)
         )
-
-
 
     def get_entity_dimensions(self, entity: Entity):
         top_left = list(entity.top_left)
@@ -115,12 +115,13 @@ class MyGame(arcade.Window):
         if game.game_message != "":
             arcade.draw_text(
                 game.game_message,
-                (SCREEN_WIDTH // 2) - (len(game.game_message)*14),
-                SCREEN_HEIGHT - 2,
-                arcade.color.LIME_GREEN,
+                (SCREEN_WIDTH / 2),
+                SCREEN_HEIGHT,
+                arcade.color.GREEN,
                 14,
-                align = "center",
-                anchor_y = "top"
+                align="center",
+                anchor_x="center",
+                anchor_y="top",
             )
 
         scores = "Score: {a} - Herder Speed: {b:.2f} - Rabbit Speed: {c:.2f}".format(
@@ -129,16 +130,15 @@ class MyGame(arcade.Window):
             c = game.rabbit.update_effective_speed(),
         )
 
-        #scores = "middle"
-
         arcade.draw_text(
             scores,
-            (SCREEN_WIDTH / 2) - (len(scores) * 22),
-            SCREEN_HEIGHT - 18,
+            (SCREEN_WIDTH / 2),
+            SCREEN_HEIGHT - 23,
             arcade.color.WHITE,
             14,
             align="center",
-            #anchor_y="top"
+            anchor_x="center",
+            anchor_y = "top",
         )
 
         draw_item_ids = False
