@@ -65,7 +65,7 @@ class Game():
         print("player:", x, y)
         self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.10)
         self.player.movement_type = MovementType.CONTROLLED
-        self.player.movement_speed = 5
+        self.player.base_speed = 5
 
     def add_rabbit(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
@@ -85,9 +85,9 @@ class Game():
     def apply_speed_down(self, apply_from, apply_to):
         modifier = apply_to.tick_rate/2
         try:
-            apply_to.movement_speed -= modifier
+            apply_to.base_speed -= modifier
         except AttributeError:
-            print("tried to apply speed down wrong thing?", apply_to)
+            print("tried to apply speed down wrong thing?", apply_to, type(apply_to))
             return
         self.remove_item(apply_from)
 
@@ -99,9 +99,9 @@ class Game():
     def apply_speed_up(self, apply_from, apply_to):
         modifier = apply_to.tick_rate/2
         try:
-            apply_to.movement_speed += modifier
+            apply_to.base_speed += modifier
         except AttributeError:
-            print("tried to apply speed up wrong thing?", apply_to)
+            print("tried to apply speed up wrong thing?", apply_to, type(apply_to))
             return
         self.remove_item(apply_from)
 

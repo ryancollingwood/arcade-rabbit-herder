@@ -1,4 +1,6 @@
+import warnings
 from consts.colour import Colour
+from consts.direction import MovementDirection, DIRECTION_INVERSE
 from typing import List
 
 class Entity:
@@ -78,8 +80,10 @@ class Entity:
         if existing_entity_id != self.id:
             self.collide(existing_entity_id)
 
+        Entity.grid - self.id
         Entity.grid[self.middle] = self.id
 
+    # todo move this into colllision module
     def collide(self, other_id):
         if other_id != self.id:
             if other_id in Entity.all: 
@@ -90,33 +94,21 @@ class Entity:
                     return [other_entity]
         return []
 
-    def check_collision_point(self, search_x, search_y):
-        # remove self from grid so we dont
-        # find ourselves
-        Entity.grid - self.id
+    def get_point_for_direction(self, direction: MovementDirection):
+        if direction == MovementDirection.SOUTH:
+            return self.bottom_middle
+        elif direction == MovementDirection.NORTH:
+            return self.top_middle
+        elif direction == MovementDirection.EAST:
+            return self.middle_left
+        elif direction == MovementDirection.WEST:
+            return self.middle_right
 
-        collision_items = Entity.grid.query(
-            search_x, search_y, k = 2, distance_upper_bound = self.width
-            )
-    
-        # now add self back to grid
-        Entity.grid[self.x, self.y, self.id]
- 
-        if collision_items is not None:
-            # print(self.id, collision_items)
-            # todo probably a list comprehension here         
-            for i, collision_item in enumerate(collision_items):
-                if not collision_item:
-                    continue
-                if collision_item[0]:
-                    if collision_item[0] == 0:
-                        continue
+        warnings.warn(f"Don't know which point to return for direction {direction}")
+        return self.middle
 
-                    if collision_item[1] > self.clip_distance:
-                        continue
-                    
-                    return self.collide(collision_item[0])
-        return []
+    def get_point_for_approaching_direction(self, direction: MovementDirection):
+        return self.get_point_for_direction(DIRECTION_INVERSE[direction])
 
     def can_think(self, frame_count):
         if self.last_tick is None:

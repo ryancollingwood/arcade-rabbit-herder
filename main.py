@@ -2,8 +2,10 @@
 import arcade
 
 from game import Game
-from entity import Entity, MovementType, MovementDirection
+from entity import Entity, MovementType
 from consts.colour import Colour
+from consts.direction import MovementDirection
+from consts.direction import MovementDirection
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -123,8 +125,8 @@ class MyGame(arcade.Window):
 
         scores = "Score: {a} - Herder Speed: {b} - Rabbit Speed: {c}".format(
             a = game.score,
-            b = game.player.get_effective_speed(),
-            c = game.rabbit.get_effective_speed(),
+            b = game.player.update_effective_speed(),
+            c = game.rabbit.update_effective_speed(),
         )
 
         #scores = "middle"
