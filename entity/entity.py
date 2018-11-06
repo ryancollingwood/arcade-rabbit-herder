@@ -100,9 +100,9 @@ class Entity:
         elif direction == MovementDirection.NORTH:
             return self.top_middle
         elif direction == MovementDirection.EAST:
-            return self.middle_left
-        elif direction == MovementDirection.WEST:
             return self.middle_right
+        elif direction == MovementDirection.WEST:
+            return self.middle_left
 
         warnings.warn(f"Don't know which point to return for direction {direction}")
         return self.middle

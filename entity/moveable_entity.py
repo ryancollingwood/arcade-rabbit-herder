@@ -67,7 +67,7 @@ class MovableEntity(Entity):
                 self.destination = None
             else: 
                 magnitude = DIRECTION_MAGNITUDES[movement_direction]
-                self.destination = (self.middle[0] + magnitude[0], self.middle[1] + magnitude[1])        
+                self.destination = (self.middle[0] + magnitude[0], self.middle[1] + magnitude[1])
             
         if self.destination is None:
             return result
@@ -283,7 +283,7 @@ class MovableEntity(Entity):
         Entity.grid - self.id
 
         collision_items = Entity.grid.query(
-            search_x + x_magnitude, search_y + y_magnitude, k=2, distance_upper_bound = self.width
+            search_x + x_magnitude, search_y + y_magnitude, k = 8, distance_upper_bound = self.width
         )
 
         # now add self back to grid
@@ -322,11 +322,22 @@ class MovableEntity(Entity):
                             self.x += clamp_x
 
                         # set direction to none and refresh since we've clamped
+                        self.destination = (self.x, self.y,)
                         self.set_direction(MovementDirection.NONE)
                         self.refresh_dimensions()
 
                     return self.collide(collision_item[0])
         return []
+
+    def move_to_point(self, destination_x, destination_y):
+        grid_destination = Entity.grid.get_pos_for_pixels(destination_x, destination_y)
+        self.destination = (grid_destination[0], grid_destination[1])
+        self.set_direction(self.get_relative_direction(grid_destination[0], grid_destination[1]))
+
+    def get_relative_direction(self, destination_x, destination_y):
+        #
+
+        return self.get_direction(destination_x - self.x, destination_y - self.y)
 
     @staticmethod
     def get_direction(x_magnitude, y_magnitude):

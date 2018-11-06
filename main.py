@@ -268,8 +268,11 @@ class MyGame(arcade.Window):
         """
         Called when a user releases a mouse button.
         """
+        grid_y = SCREEN_HEIGHT - y
+
         if button == arcade.MOUSE_BUTTON_LEFT:
-            self.game.debug_x_y(x, y)
+            self.game.debug_x_y(x, grid_y)
+            self.game.player.move_to_point(x, grid_y)
 
 
 def main():

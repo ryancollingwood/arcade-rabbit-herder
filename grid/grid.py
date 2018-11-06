@@ -2,7 +2,7 @@ import numpy as np
 import math
 from scipy.spatial import KDTree
 from typing import Tuple
-
+from warnings import warn
 
 class Grid():
     
@@ -148,7 +148,8 @@ class Grid():
         
         # query_result[0] - The distances to the nearest neighbour
         # query_result[1] - The locations of the neighbours
-        return self.flat_pixel_positions[query_result[1]]
+        yx = self.flat_pixel_positions[query_result[1]]
+        return (yx[1], yx[0],)
     
     def query_tree(self, x, y, k = 1, distance_upper_bound = np.inf):
         """
@@ -167,14 +168,23 @@ class Grid():
         query_result = self.query_tree(x, y, k = k, distance_upper_bound = distance_upper_bound)
         if query_result:
             try:
+                # filter out infinity
+                index_valid = np.where(query_result[0] < np.inf)
+                entity_ids = self.data[query_result[1][index_valid]]
+                distances = query_result[0][index_valid]
+
                 # returning into a flattened array so that we there's only
                 # one result we still have an array
                 return list(zip(
-                    np.array(self.data[query_result[1]]).flatten(), 
-                    np.array(query_result[0]).flatten()
+                    np.array(entity_ids).flatten(),
+                    np.array(distances).flatten()
                 ))
-            except IndexError:
+            except IndexError as e:
+                print(e)
+                warning_message = f"IndexError Grid.query({x}, {y}, {k}, {distance_upper_bound})"
+                warn(warning_message)
                 pass
+
         return None, None       
     
 
