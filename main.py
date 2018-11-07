@@ -4,7 +4,7 @@ import arcade
 from game import Game
 from entity import Entity, MovementType
 from consts.colour import Colour
-from consts.direction import MovementDirection
+from entity import MovableEntity
 from consts.direction import MovementDirection
 
 SCREEN_WIDTH = 800
@@ -126,8 +126,8 @@ class MyGame(arcade.Window):
 
         scores = "Score: {a} - Herder Speed: {b:.2f} - Rabbit Speed: {c:.2f}".format(
             a = game.score,
-            b = game.player.update_effective_speed(),
-            c = game.rabbit.update_effective_speed(),
+            b = game.player.speed,
+            c = game.rabbit.speed,
         )
 
         arcade.draw_text(
@@ -241,16 +241,20 @@ class MyGame(arcade.Window):
         """
         Called whenever the user lets off a previously pressed key.
         """
-        player = self.game.player
+        player: MovableEntity = self.game.player
         
         if key == arcade.key.LEFT:
-            player.set_direction(MovementDirection.NONE)
+            if player.movement_direction == MovementDirection.WEST:
+                player.set_direction(MovementDirection.NONE)
         elif key == arcade.key.RIGHT:
-            player.set_direction(MovementDirection.NONE)
+            if player.movement_direction == MovementDirection.EAST:
+                player.set_direction(MovementDirection.NONE)
         elif key == arcade.key.UP:
-            player.set_direction(MovementDirection.NONE)
+            if player.movement_direction == MovementDirection.NORTH:
+                player.set_direction(MovementDirection.NONE)
         elif key == arcade.key.DOWN:
-            player.set_direction(MovementDirection.NONE)
+            if player.movement_direction == MovementDirection.SOUTH:
+                player.set_direction(MovementDirection.NONE)
 
     def on_mouse_motion(self, x, y, delta_x, delta_y):
         """

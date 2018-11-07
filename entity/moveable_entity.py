@@ -59,8 +59,8 @@ class MovableEntity(Entity):
             return
     
         if self.movement_type == MovementType.CHASE:
-            destination_entity = Entity.all[self.target]
-            self.destination = (destination_entity.x, destination_entity.y)
+            destination_entity: MovableEntity = Entity.all[self.target]
+            self.destination = destination_entity.grid_pixels
         elif self.movement_type == MovementType.CONTROLLED:
             movement_direction = self.movement_direction
             if movement_direction == MovementDirection.NONE:
@@ -142,12 +142,11 @@ class MovableEntity(Entity):
             result = decrease_position()
         elif destination < current < destination_offset_boundary[1]:
             result = increase_position()
-        elif self.target_offset > 0 and current == destination:
-            # tie breaking if we're exactly on our target but we need to be at an offset
-            if choice([True, False]):
-                result = decrease_position()
-            else:
-                result = increase_position()
+        elif self.target_offset > 0:
+            if current - self.target_offset == destination:
+                return False
+            elif current + self.target_offset == destination:
+                return False
                 
         return result
 
@@ -170,26 +169,35 @@ class MovableEntity(Entity):
     def set_direction(self, direction: MovementDirection):
 
         if direction != self.last_movement_direction:
-            self.last_movement_direction = direction
             self.acceleration = 0
+            self.speed = 0
+            self.last_movement_direction = direction
+            self.update_effective_speed()
 
         self.movement_direction = direction
 
     def update_effective_speed(self):
-        if self.movement_direction != MovementDirection.NONE:
-            self.acceleration += self.base_speed * self.acceleration_rate
 
-        if self.acceleration > self.max_acceleration:
-            self.acceleration = self.max_acceleration
+        if self.speed < self.base_speed:
+            self.speed += 1
+        else:
+            if self.movement_direction != MovementDirection.NONE:
+                self.acceleration += self.base_speed * self.acceleration_rate
+            else:
+                self.acceleration = 0
 
-        return (1 * self.base_speed) + self.acceleration
+            if self.acceleration > self.max_acceleration:
+                self.acceleration = self.max_acceleration
+
+            self.speed = self.base_speed + self.acceleration
 
     def move_left(self):
         """
         Move left on screen
         :return:
         """
-        self.speed = self.update_effective_speed()
+        self.set_direction(MovementDirection.WEST)
+        self.update_effective_speed()
         return self.move_in_direction(-1 * self.speed, 0)
 
 
@@ -198,7 +206,8 @@ class MovableEntity(Entity):
         Move right on screen
         :return:
         """
-        self.speed = self.update_effective_speed()
+        self.set_direction(MovementDirection.EAST)
+        self.update_effective_speed()
         return self.move_in_direction(self.speed, 0)
 
     def move_up(self):
@@ -206,7 +215,8 @@ class MovableEntity(Entity):
         Move up on screen
         :return:
         """
-        self.speed = self.update_effective_speed()
+        self.set_direction(MovementDirection.NORTH)
+        self.update_effective_speed()
         return self.move_in_direction(0, -1 * self.speed)
 
     def move_down(self):
@@ -214,7 +224,8 @@ class MovableEntity(Entity):
         Move down on screen
         :return:
         """
-        self.speed = self.update_effective_speed()
+        self.set_direction(MovementDirection.SOUTH)
+        self.update_effective_speed()
         return self.move_in_direction(0, self.speed)
 
     def move_in_direction(self, x_magnitude, y_magnitude):
@@ -231,8 +242,16 @@ class MovableEntity(Entity):
         collide_entities = self.collide_entities(new_direction, x_magnitude, y_magnitude)
         if collide_entities is not None and len(collide_entities) == 0:
             self.set_direction(new_direction)
-            self.x = (self.x + x_magnitude) #% MovableEntity.width_aspect_ratio
-            self.y = (self.y + y_magnitude) #% MovableEntity.width_aspect_ratio
+            # TODO check we don't overshoot
+            # if self.x + x_magnitude > self.destination[0] and self.movement_type != MovementType.CONTROLLED:
+            #    self.x = self.destination[0]
+            self.x = (self.x + x_magnitude)
+
+            # TODO check we don't overshoot
+            # if self.y + y_magnitude > self.destination[1] and self.movement_type != MovementType.CONTROLLED:
+            #    self.y = self.destination[1]
+            self.y = (self.y + y_magnitude)
+
             result = True
             
         self.refresh_dimensions()

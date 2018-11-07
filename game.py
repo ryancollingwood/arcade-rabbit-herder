@@ -65,17 +65,17 @@ class Game():
         print("player:", x, y)
         self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.10)
         self.player.movement_type = MovementType.CONTROLLED
-        self.player.base_speed = 4
-        self.player.max_acceleration = 3
-        self.player.acceleration_rate = 0.01
+        self.player.base_speed = 5
+        self.player.max_acceleration = 10
+        self.player.acceleration_rate = 0.25
 
     def add_rabbit(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("rabbit:", x, y)
         self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 0.10, False, self.npcs)
-        self.rabbit.base_speed = 5
-        self.rabbit.max_acceleration = 1
-        self.rabbit.acceleration_rate = 0.05
+        self.rabbit.base_speed = 4
+        self.rabbit.max_acceleration = 8
+        self.rabbit.acceleration_rate = 0.5
 
     def remove_item(self, item):
         self.grid - item.id
@@ -91,8 +91,6 @@ class Game():
         try:
             acceleration_modifier = apply_to.acceleration_rate / 2
             apply_to.acceleration_rate -= acceleration_modifier
-            base_speed_modifier = apply_to.base_speed / 2
-            apply_to.base_speed -= base_speed_modifier
         except AttributeError:
             print("tried to apply speed down wrong thing?", apply_to, type(apply_to))
             return
@@ -107,8 +105,6 @@ class Game():
         try:
             acceleration_modifier = apply_to.acceleration_rate / 2
             apply_to.acceleration_rate += acceleration_modifier
-            base_speed_modifier = apply_to.base_speed / 2
-            apply_to.base_speed += base_speed_modifier
         except AttributeError:
             print("tried to apply speed up wrong thing?", apply_to, type(apply_to))
             return
