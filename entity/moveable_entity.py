@@ -238,19 +238,28 @@ class MovableEntity(Entity):
         """
         result = False
         new_direction = self.get_direction(x_magnitude, y_magnitude)
+
+        if self.movement_type == MovementType.CONTROLLED:
+            self.destination = (self.x + x_magnitude, self.y + y_magnitude)
     
         collide_entities = self.collide_entities(new_direction, x_magnitude, y_magnitude)
-        if collide_entities is not None and len(collide_entities) == 0:
+        if len(collide_entities) == 0:
             self.set_direction(new_direction)
-            # TODO check we don't overshoot
-            # if self.x + x_magnitude > self.destination[0] and self.movement_type != MovementType.CONTROLLED:
-            #    self.x = self.destination[0]
+
             self.x = (self.x + x_magnitude)
+            self.y = (self.y + y_magnitude)
 
             # TODO check we don't overshoot
-            # if self.y + y_magnitude > self.destination[1] and self.movement_type != MovementType.CONTROLLED:
-            #    self.y = self.destination[1]
-            self.y = (self.y + y_magnitude)
+            # if not controlled movement check we don't overshoot
+            # if self.movement_type == MovementType.CONTROLLED:
+            #    self.destination = (self.x + x_magnitude, self.y + y_magnitude)
+            # else:
+            #    if x_magnitude > 0:
+            #        if self.x + x_magnitude > self.destination[0] + self.target_offset:
+            #            self.x = self.destination[0] + self.target_offset
+            #    elif x_magnitude < 0:
+            #        if self.x + x_magnitude < self.destination[0] - self.target_offset:
+            #            self.x = self.destination[0] - self.target_offset
 
             result = True
             
@@ -290,7 +299,6 @@ class MovableEntity(Entity):
                 return collision_item
     
         return []
-
 
     # todo move this into colllision module
     def check_collision_point(self, search_x, search_y,
