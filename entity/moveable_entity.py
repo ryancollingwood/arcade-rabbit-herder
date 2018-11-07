@@ -53,6 +53,13 @@ class MovableEntity(Entity):
         Determine which direction we should move and conditionally set our destination
         :return:
         """
+        
+        def need_to_move(current, lower_bound, middle, upper_bound):
+            if current in [lower_bound, middle, upper_bound]:
+                return False
+            return True
+
+        
         result = False
 
         if self.movement_type == MovementType.NONE:
@@ -77,14 +84,27 @@ class MovableEntity(Entity):
         move_horizontal, destination_offset_boundary_x = self.is_within_destination_and_offset(
             self.x, self.destination[0]
         )
+        
+        if move_horizontal:
+            move_horizontal = need_to_move(
+                self.x, destination_offset_boundary_x[0], self.destination[0], destination_offset_boundary_x[1]
+            )
+            
         move_vertical, destination_offset_boundary_y = self.is_within_destination_and_offset(
             self.y, self.destination[1]
         )
+        
+        if move_vertical:
+            move_vertical = need_to_move(
+                self.y, destination_offset_boundary_y[0], self.destination[1], destination_offset_boundary_y[1]
+            )
     
         if move_horizontal and move_vertical:
             move_both = True
             move_horizontal = choice([True, False])
             move_vertical = not move_horizontal
+        elif not move_horizontal and not move_vertical:
+            self.set_direction(MovementDirection.NONE)
     
         if move_horizontal:
             result = self.move_in_plane(
@@ -108,7 +128,6 @@ class MovableEntity(Entity):
                     self.x, self.destination[0], destination_offset_boundary_x, self.move_left, self.move_right
                     )
 
-        
             return result
         else:
             
@@ -236,6 +255,25 @@ class MovableEntity(Entity):
         :param y_magnitude:
         :return:
         """
+
+        def finalise_plane_position(current, destination, magnitude, offset):
+            """
+            For each of our planes ensure we don't overshoot our destination
+            :param current:
+            :param destination:
+            :param magnitude:
+            :param offset:
+            :return:
+            """
+            if magnitude > 0:
+                if current + magnitude > destination + offset:
+                    return destination + offset
+            elif magnitude < 0:
+                if current + magnitude < destination - offset:
+                    return destination - offset
+    
+            return current + magnitude
+
         result = False
         new_direction = self.get_direction(x_magnitude, y_magnitude)
 
@@ -248,23 +286,21 @@ class MovableEntity(Entity):
 
             self.x = (self.x + x_magnitude)
             self.y = (self.y + y_magnitude)
-
-            # TODO check we don't overshoot
+            
             # if not controlled movement check we don't overshoot
-            # if self.movement_type == MovementType.CONTROLLED:
-            #    self.destination = (self.x + x_magnitude, self.y + y_magnitude)
-            # else:
-            #    if x_magnitude > 0:
-            #        if self.x + x_magnitude > self.destination[0] + self.target_offset:
-            #            self.x = self.destination[0] + self.target_offset
-            #    elif x_magnitude < 0:
-            #        if self.x + x_magnitude < self.destination[0] - self.target_offset:
-            #            self.x = self.destination[0] - self.target_offset
+            if self.movement_type == MovementType.CONTROLLED:
+                self.destination = (self.x + x_magnitude, self.y + y_magnitude)
+                self.x = (self.x + x_magnitude)
+                self.y = (self.y + y_magnitude)
+            else:
+                self.x = finalise_plane_position(self.x, self.destination[0], x_magnitude, self.target_offset)
+                self.y = finalise_plane_position(self.y, self.destination[1], y_magnitude, self.target_offset)
 
             result = True
             
         self.refresh_dimensions()
         return result
+
 
     def collide_entities(self, direction: MovementDirection, x_magnitude, y_magnitude):
     
