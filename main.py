@@ -276,7 +276,7 @@ class MyGame(arcade.Window):
 
         if button == arcade.MOUSE_BUTTON_LEFT:
             self.game.debug_x_y(x, grid_y)
-            self.game.player.move_to_point(x, grid_y)
+            # self.game.player.move_to_point(x, grid_y)
 
 
 def main():

@@ -388,8 +388,8 @@ class MovableEntity(Entity):
         # TODO when moving fast we’re not identifying collisiosn
         magnitudes = DIRECTION_MAGNITUDES[direction]
         collision_items = Entity.grid.query(
-            #search_x + (magnitudes[0]), search_y + (magnitudes[1]), k = 8, distance_upper_bound = self.width
-            search_x + x_magnitude, search_y + y_magnitude, k = 8, distance_upper_bound = self.width + self.speed
+            search_x + (magnitudes[0]), search_y + (magnitudes[1]), k = 8, distance_upper_bound = self.width
+            #search_x + x_magnitude, search_y + y_magnitude, k = 8, distance_upper_bound = self.width
         )
 
         # now add self back to grid
