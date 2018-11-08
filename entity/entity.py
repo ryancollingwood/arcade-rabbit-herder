@@ -1,4 +1,4 @@
-import warnings
+from warnings import warn
 from consts.colour import Colour
 from consts.direction import MovementDirection, DIRECTION_INVERSE
 from typing import List
@@ -61,7 +61,17 @@ class Entity:
     def __repr__(self):
         return self.__str__()
 
-    def refresh_dimensions(self):        
+    def refresh_dimensions(self):
+        new_middle = (self.x, self.y)
+        
+        if self.middle is not None:
+            existing_entity_id = Entity.grid[self.middle]
+            if existing_entity_id and existing_entity_id != self.id:
+                if len(self.collide(existing_entity_id, 0)) != 0:
+                    warn("Handling collision outside of collision check")
+                    self.x = self.grid_pixels[0]
+                    self.y = self.grid_pixels[1]
+
         self.top_left = (self.x - self.half_width, self.y - self.half_height)
         self.top_middle = (self.x, self.y - self.half_height)
         self.top_right = (self.x + self.half_width, self.y - self.half_height)
@@ -71,25 +81,31 @@ class Entity:
         self.middle_right = (self.x + self.half_width, self.y)
         self.middle_left = (self.x - self.half_width, self.y)
         self.middle = (self.x, self.y)
-        self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
+        # self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
         self.clip_distance = self.width * 0.8
 
         # again check for collision
         
         existing_entity_id = Entity.grid[self.middle] 
-        if existing_entity_id != self.id:
-            self.collide(existing_entity_id)
+        if existing_entity_id and existing_entity_id != self.id:
+            if len(self.collide(existing_entity_id, 0)) != 0:
+                warn("Handling collision outside of collision check")
 
+        self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
+        
         Entity.grid - self.id
         Entity.grid[self.middle] = self.id
 
     # todo move this into colllision module
-    def collide(self, other_id):
+    def collide(self, other_id, distance):
         if other_id != self.id:
-            if other_id in Entity.all: 
+            if other_id in Entity.all:
                 other_entity = Entity.all[other_id]
                 if other_entity.on_collide is not None:
-                    other_entity.on_collide(other_entity, self)
+                    # TODO: this should be a we read for other_entiy property for how much overlap we allow before we react
+                    if distance < other_entity.half_width:
+                        other_entity.on_collide(other_entity, self)
+                        
                 if other_entity.is_solid:
                     return [other_entity]
         return []
@@ -104,7 +120,7 @@ class Entity:
         elif direction == MovementDirection.WEST:
             return self.middle_left
 
-        warnings.warn(f"Don't know which point to return for direction {direction}")
+        warn(f"Don't know which point to return for direction {direction}")
         return self.middle
 
     def get_point_for_approaching_direction(self, direction: MovementDirection):

@@ -1,4 +1,5 @@
 from enum import Enum
+from warnings import warn
 from random import choice, randint
 from typing import List, Tuple
 
@@ -8,14 +9,19 @@ from entity import Entity
 
 
 class MovementType(Enum):
-    NONE = 0
-    CONTROLLED = 1
-    PATROL = 2
-    CHASE = 3
+    """
+    What 'brain' controls the movement?
+    """
+    NONE = 0  # No movement
+    CONTROLLED = 1  # Movement is from external source i.e. the player
+    PATROL = 2  # Randomly pick a destination around within an area, do this again upon reaching that destination
+    CHASE = 3  # Try to move to a target, which itself may be changing it's position i.e. move to attack player
 
 
 class MovableEntity(Entity):
-    
+    """
+    An entity that can move
+    """
     width_aspect_ratio = 1
 
     def __init__(self,
@@ -55,10 +61,17 @@ class MovableEntity(Entity):
         """
         
         def need_to_move(current, lower_bound, middle, upper_bound):
+            """
+            Check that we even need to move
+            :param current:
+            :param lower_bound:
+            :param middle:
+            :param upper_bound:
+            :return:
+            """
             if current in [lower_bound, middle, upper_bound]:
                 return False
             return True
-
         
         result = False
 
@@ -186,7 +199,11 @@ class MovableEntity(Entity):
         return False, destination_bounds
 
     def set_direction(self, direction: MovementDirection):
-
+        """
+        Set the direction, if we've changed direction reset our acceleration and speed
+        :param direction:
+        :return:
+        """
         if direction != self.last_movement_direction:
             self.acceleration = 0
             self.speed = 0
@@ -196,6 +213,11 @@ class MovableEntity(Entity):
         self.movement_direction = direction
 
     def update_effective_speed(self):
+        """
+        Determine our "speed" if below our base speed then increase by 1 pixel until we breach it.
+        Otherwise increase our speed based on our acceleration properties.
+        :return:
+        """
 
         if self.speed < self.base_speed:
             self.speed += 1
@@ -303,36 +325,42 @@ class MovableEntity(Entity):
 
 
     def collide_entities(self, direction: MovementDirection, x_magnitude, y_magnitude):
-    
+        """
+        For a given direction and magnitudes, determine which point we need to check for collisions
+        and then check if that point will collide if we were to update our position by the passed collisions
+        :param direction:
+        :param x_magnitude:
+        :param y_magnitude:
+        :return:
+        """
         directions = [self.middle]
         
         # when more accurate collision dection is implemented additional
         # points can be used
         if direction == MovementDirection.NORTH:
-            #directions = [self.top_left, self.top_middle, self.top_right]
             directions = [self.top_middle]
         elif direction == MovementDirection.WEST:
-            #directions = [self.top_left, self.bottom_left, self.middle_left]
             directions = [self.middle_left]
         elif direction == MovementDirection.EAST:
-            #directions = [self.top_right, self.bottom_right, self.middle_right]
             directions = [self.middle_right]
         elif direction == MovementDirection.SOUTH:
-            #directions = [self.bottom_right, self.bottom_left, self.bottom_middle]
             directions = [self.bottom_middle]
+        else:
+            warn(f"Cannot determine point to check collision for direction {direction}")
+            return []
             
         for position in directions:
             start_x = position[0]
             start_y = position[1]
         
-            collision_item = self.check_collision_point(
+            collision_items = self.check_collision_point(
                 start_x, start_y,
                 direction,
                 x_magnitude, y_magnitude
             )
         
-            if len(collision_item) > 0:
-                return collision_item
+            if len(collision_items) > 0:
+                return collision_items
     
         return []
 
@@ -341,12 +369,27 @@ class MovableEntity(Entity):
                               direction=MovementDirection.NONE,
                               x_magnitude=0, y_magnitude=0
                               ):
+        """
+        Check for collision with other entities in the grid
+        :param search_x:
+        :param search_y:
+        :param direction:
+        :param x_magnitude:
+        :param y_magnitude:
+        :return:
+        """
+        result = []
+        
         # remove self from grid so we dont
         # find ourselves
         Entity.grid - self.id
 
+        # TODO check for the nearest grid position based on the direction
+        # TODO when moving fast we’re not identifying collisiosn
+        magnitudes = DIRECTION_MAGNITUDES[direction]
         collision_items = Entity.grid.query(
-            search_x + x_magnitude, search_y + y_magnitude, k = 8, distance_upper_bound = self.width
+            #search_x + (magnitudes[0]), search_y + (magnitudes[1]), k = 8, distance_upper_bound = self.width
+            search_x + x_magnitude, search_y + y_magnitude, k = 8, distance_upper_bound = self.width + self.speed
         )
 
         # now add self back to grid
@@ -361,6 +404,9 @@ class MovableEntity(Entity):
                 if collision_item[0]:
                     if collision_item[0] == 0:
                         continue
+                    
+                    #if collision_item[1] > self.width:
+                    #    continue
 
                     collision_entity: Entity = Entity.all[collision_item[0]]
 
@@ -378,6 +424,7 @@ class MovableEntity(Entity):
                                 continue
 
                             self.y += clamp_y
+                        
                         elif direction in [MovementDirection.EAST, MovementDirection.WEST]:
                             if clamp_x != 0 and abs(clamp_x) > abs(x_magnitude):
                                 continue
@@ -389,17 +436,29 @@ class MovableEntity(Entity):
                         self.set_direction(MovementDirection.NONE)
                         self.refresh_dimensions()
 
-                    return self.collide(collision_item[0])
-        return []
+                    # result = result + self.collide(collision_item[0], collision_item[1])
+                    return self.collide(collision_item[0], collision_item[1])
+        return result
 
     def move_to_point(self, destination_x, destination_y):
+        """
+        For a destination determine the nearest grid center position and set our direction towards it so that
+        we start moving towards it.
+        :param destination_x:
+        :param destination_y:
+        :return:
+        """
         grid_destination = Entity.grid.get_pos_for_pixels(destination_x, destination_y)
         self.destination = (grid_destination[0], grid_destination[1])
         self.set_direction(self.get_relative_direction(grid_destination[0], grid_destination[1]))
 
     def get_relative_direction(self, destination_x, destination_y):
-        #
-
+        """
+        For an x,y position what is the direction we'd need to travel in to reach the position?
+        :param destination_x:
+        :param destination_y:
+        :return:
+        """
         return self.get_direction(destination_x - self.x, destination_y - self.y)
 
     @staticmethod
@@ -433,5 +492,3 @@ class MovableEntity(Entity):
                 elif x_magnitude < 0:
                     new_direction = MovementDirection.SOUTH_WEST
         return new_direction
-
-
