@@ -1,7 +1,9 @@
+from enum import Enum
 from warnings import warn
 from consts.colour import Colour
 from consts.direction import MovementDirection, DIRECTION_INVERSE
 from typing import List
+
 
 class Entity:
     
@@ -10,10 +12,11 @@ class Entity:
     grid = None
     
     def __init__(
-        self,
-        x: int, y: int, height: int, width: int,
-        base_colour: Colour, tick_rate: float = 0.5,
-        is_solid: bool = True, parent_collection: List = None
+            self,
+            x: int, y: int, height: int, width: int,
+            base_colour: Colour, tick_rate: float = 0.5,
+            is_solid: bool = True, parent_collection: List = None,
+            grid_layer = 0,
         ):
         
         Entity.id += 1
@@ -21,6 +24,9 @@ class Entity:
         
         self.x = x
         self.y = y
+        self.last_x = None
+        self.last_y = None
+
         self.height = height
         self.width = width
         self.half_height = height / 2
@@ -30,6 +36,7 @@ class Entity:
         self.tick_rate = tick_rate
         self.is_solid = is_solid
         self.on_collide = None
+        self.grid_layer = grid_layer
 
         self.top_left = None
         self.top_right = None
@@ -62,15 +69,22 @@ class Entity:
         return self.__str__()
 
     def refresh_dimensions(self):
-        new_middle = (self.x, self.y)
-        
-        if self.middle is not None:
-            existing_entity_id = Entity.grid[self.middle]
-            if existing_entity_id and existing_entity_id != self.id:
-                if len(self.collide(existing_entity_id, 0)) != 0:
-                    warn("Handling collision outside of collision check")
-                    self.x = self.grid_pixels[0]
-                    self.y = self.grid_pixels[1]
+
+        if self.x == self.last_x and self.y == self.last_y:
+            return
+
+        existing_ids = Entity.grid[(self.x, self.y, self.grid_layer.value)]
+        matches = existing_ids[(existing_ids != 0) & (existing_ids != self.id)]
+        if len(matches) > 0:
+            for i in matches:
+                other: Entity = Entity.all[i]
+                self.collide(i, 0)
+                if other.grid_layer == self.grid_layer and other.id != self.id:
+                    raise Exception("cannot replace!")
+
+                if other.is_solid:
+                    self.x = self.last_x
+                    self.y = self.last_y
 
         self.top_left = (self.x - self.half_width, self.y - self.half_height)
         self.top_middle = (self.x, self.y - self.half_height)
@@ -81,20 +95,16 @@ class Entity:
         self.middle_right = (self.x + self.half_width, self.y)
         self.middle_left = (self.x - self.half_width, self.y)
         self.middle = (self.x, self.y)
-        # self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
+        self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
         self.clip_distance = self.width * 0.8
 
-        # again check for collision
-        
-        existing_entity_id = Entity.grid[self.middle] 
-        if existing_entity_id and existing_entity_id != self.id:
-            if len(self.collide(existing_entity_id, 0)) != 0:
-                warn("Handling collision outside of collision check")
-
-        self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
-        
+        # remove from the grid and re-add to new position
         Entity.grid - self.id
-        Entity.grid[self.middle] = self.id
+        Entity.grid[(self.x, self.y, self.grid_layer.value)] = self.id
+
+        # update our cached x,y
+        self.last_x = self.x
+        self.last_y = self.y
 
     # todo move this into colllision module
     def collide(self, other_id, distance):

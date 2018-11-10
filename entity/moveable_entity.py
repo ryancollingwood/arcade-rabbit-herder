@@ -28,11 +28,11 @@ class MovableEntity(Entity):
                  x: int, y: int, height: int, width: int,
                  base_colour: Colour, tick_rate: int = 5,
                  is_solid: bool = True, parent_collection: List = None,
-                 movement_type: MovementType = MovementType.PATROL,
+                 grid_layer: int = 0, movement_type: MovementType = MovementType.PATROL,
                  target = None, target_offset = 0
                  ):
         
-        super().__init__(x, y, height, width, base_colour, tick_rate, is_solid, parent_collection)
+        super().__init__(x, y, height, width, base_colour, tick_rate, is_solid, parent_collection, grid_layer)
 
         self.destination = None
         self.movement_type = movement_type
@@ -379,24 +379,14 @@ class MovableEntity(Entity):
         :return:
         """
         result = []
-        
-        # remove self from grid so we dont
-        # find ourselves
-        Entity.grid - self.id
 
-        # TODO check for the nearest grid position based on the direction
-        # TODO when moving fast we’re not identifying collisiosn
+        # based on our direction which x,y deltas do we need to be looking in?
         magnitudes = DIRECTION_MAGNITUDES[direction]
         collision_items = Entity.grid.query(
             search_x + (magnitudes[0]), search_y + (magnitudes[1]), k = 8, distance_upper_bound = self.width
-            #search_x + x_magnitude, search_y + y_magnitude, k = 8, distance_upper_bound = self.width
         )
 
-        # now add self back to grid
-        Entity.grid[self.x, self.y, self.id]
-
         if collision_items is not None:
-            # print(self.id, collision_items)
             # todo probably a list comprehension here
             for collision_item in collision_items:
                 if not collision_item:
@@ -404,9 +394,8 @@ class MovableEntity(Entity):
                 if collision_item[0]:
                     if collision_item[0] == 0:
                         continue
-                    
-                    #if collision_item[1] > self.width:
-                    #    continue
+                    if collision_item[0] == self.id:
+                        continue
 
                     collision_entity: Entity = Entity.all[collision_item[0]]
 
@@ -436,8 +425,8 @@ class MovableEntity(Entity):
                         self.set_direction(MovementDirection.NONE)
                         self.refresh_dimensions()
 
-                    # result = result + self.collide(collision_item[0], collision_item[1])
                     return self.collide(collision_item[0], collision_item[1])
+
         return result
 
     def move_to_point(self, destination_x, destination_y):

@@ -44,7 +44,7 @@ class MyGame(arcade.Window):
 
     def setup(self):
         # Create your sprites and sprite lists here
-        self.game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 1)
+        self.game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 1, grid_layers = 4)
 
         self.shape_walls = arcade.ShapeElementList()
 
@@ -108,6 +108,9 @@ class MyGame(arcade.Window):
         arcade.start_render()
 
         game = self.game
+
+        if not game.is_running:
+            return
 
         # Call draw() on all your sprite lists below
         self.shape_walls.draw()
@@ -179,6 +182,8 @@ class MyGame(arcade.Window):
         """
         # Call draw() on all your sprite lists below
         game = self.game
+        if not game.is_running:
+            return
 
         items = game.items.copy()
         for item in items:
@@ -200,6 +205,9 @@ class MyGame(arcade.Window):
         For a full list of keys, see:
         http://arcade.academy/arcade.key.html
         """
+        if not self.game.is_running:
+            return
+
         player = self.game.player
         rabbit = self.game.rabbit
 

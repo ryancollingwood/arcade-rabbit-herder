@@ -1,15 +1,38 @@
 from grid import Grid
 from entity import MovableEntity, Entity, MovementType
 from consts import Colour
-from consts import Keys
+from consts import Layer
 
 
 class Game():
-    def __init__(self, width, height, tile_size, width_aspect_ratio, flip_x = False, flip_y = False):
-        self.width = width
-        self.height = height
-        self.tile_size = tile_size
+    def __init__(
+            self, width, height, tile_size, width_aspect_ratio: float,
+            grid_layers: int = 3, flip_x: bool = False, flip_y: bool = False):
 
+        self.is_running: bool = False
+        self.width: int = width
+        self.height: int = height
+        self.tile_size: float = tile_size
+        self.grid_layers: int = grid_layers
+        self.flip_x: bool = flip_x
+        self.flip_y: bool = flip_y
+
+        self.player: MovableEntity = None
+        self.rabbit: MovableEntity = None
+        self.npcs = []
+        self.items = []
+        self.walls = []
+        self.score: int = 0
+        self.game_message = ""
+
+        self.grid = None
+        
+        MovableEntity.width_aspect_ratio = width_aspect_ratio
+
+        self.load_level()
+
+    def reset_game(self):
+        self.is_running = False
         self.player = None
         self.rabbit = None
         self.npcs = []
@@ -17,23 +40,11 @@ class Game():
         self.walls = []
         self.score = 0
         self.game_message = ""
-
-        self.grid = Grid(width, height, tile_size, flip_x, flip_y)
-        
-        MovableEntity.width_aspect_ratio = width_aspect_ratio
-        Entity.grid = self.grid
-
-        self.load_level()
-        
         self.debug_message = ""
-        self.game_message = ""
 
-    def reset_game(self):
-        self.npcs = []
-        self.items = []
-        self.walls = []
-        self.score = 0
-        self.game_message = ""
+        # reset and reassign the grid
+        self.grid = Grid(self.width, self.height, self.tile_size, self.grid_layers, self.flip_x, self.flip_y)
+        Entity.grid = self.grid
 
     def load_level(self):
         self.reset_game()
@@ -59,11 +70,18 @@ class Game():
                     self.add_end(row_index, col_index)
         
         self.start_rabbit()
+        self.is_running = True
 
     def add_player(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("player:", x, y)
-        self.player = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.GREEN, 0.10)
+        self.player = MovableEntity(
+            x, y, self.tile_size-2, self.tile_size-2,
+            Colour.GREEN, 0.10,
+            is_solid = True, parent_collection = None,
+            grid_layer = Layer.PLAYER
+        )
+
         self.player.movement_type = MovementType.CONTROLLED
         self.player.base_speed = 5
         self.player.max_acceleration = 10
@@ -72,7 +90,11 @@ class Game():
     def add_rabbit(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
         print("rabbit:", x, y)
-        self.rabbit = MovableEntity(x, y, self.tile_size-2, self.tile_size-2, Colour.WHITE, 0.10, False, self.npcs)
+        self.rabbit = MovableEntity(
+            x, y, self.tile_size-2, self.tile_size-2,
+            Colour.WHITE, 0.10, False, self.npcs,
+            grid_layer = Layer.NPC
+        )
         self.rabbit.base_speed = 4
         self.rabbit.max_acceleration = 8
         self.rabbit.acceleration_rate = 0.5
@@ -84,7 +106,7 @@ class Game():
 
     def add_speed_down(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
-        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.RED, 5, False, self.items)
+        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.RED, 5, False, self.items, Layer.ITEMS)
         item.on_collide = self.apply_speed_down
 
     def apply_speed_down(self, apply_from, apply_to):
@@ -98,7 +120,7 @@ class Game():
 
     def add_speed_up(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
-        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.LIGHT_BLUE, 5, False, self.items)
+        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.LIGHT_BLUE, 5, False, self.items, Layer.ITEMS)
         item.on_collide = self.apply_speed_up
 
     def apply_speed_up(self, apply_from, apply_to):
@@ -112,7 +134,7 @@ class Game():
 
     def add_carrot(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
-        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.ORANGE, 5, False, self.items)
+        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.ORANGE, 5, False, self.items, Layer.ITEMS)
         item.on_collide = self.eat_carrot
 
     def eat_carrot(self, carrot, eater):
@@ -123,7 +145,7 @@ class Game():
 
     def add_end(self, row, column):
         x, y = self.grid.get_pixel_center(row, column)
-        item = Entity(x, y, self.tile_size, self.tile_size, Colour.GREY, 5, False, self.items)
+        item = Entity(x, y, self.tile_size, self.tile_size, Colour.GREY, 5, False, self.items, Layer.WORLD)
         item.on_collide = self.check_end
 
     def check_end(self, goal, other):
@@ -146,7 +168,8 @@ class Game():
             y,
             self.tile_size, self.tile_size, Colour.BROWN,
             5, True,
-            self.walls
+            self.walls,
+            Layer.WORLD
         )
 
     def get_grid_data(self, x, y):
