@@ -323,7 +323,6 @@ class MovableEntity(Entity):
         self.refresh_dimensions()
         return result
 
-
     def collide_entities(self, direction: MovementDirection, x_magnitude, y_magnitude):
         """
         For a given direction and magnitudes, determine which point we need to check for collisions

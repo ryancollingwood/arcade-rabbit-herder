@@ -58,7 +58,11 @@ class Entity:
         Entity.all[self.id] = self
     
     def __str__(self):
-        return "{id} - {x},{y} - {colour}".format(
+        """
+        For debug purposes give a textual description of the entity
+        :return: str - describing the entity
+        """
+        return "id: {id} - x: {x}, y: {y} - colour: {colour}".format(
             id = self.id,
             x = self.x,
             y = self.y,
@@ -69,6 +73,10 @@ class Entity:
         return self.__str__()
 
     def refresh_dimensions(self):
+        """
+        For the current x,y pixel location update all other dimension of the entity
+        :return: None
+        """
 
         if self.x == self.last_x and self.y == self.last_y:
             return
@@ -106,8 +114,18 @@ class Entity:
         self.last_x = self.x
         self.last_y = self.y
 
-    # todo move this into colllision module
+    # TODO: move this into colllision module
     def collide(self, other_id, distance):
+        """
+        Check that we've collided with another entity and if so, call the method associated to the
+        on_collide property of the other entity
+        
+        TODO: there is a limitation that we'll only collide with a maximum of one entity
+        
+        :param other_id:
+        :param distance:
+        :return: List[Entity] - Can be an empty list if no collisions
+        """
         if other_id != self.id:
             if other_id in Entity.all:
                 other_entity = Entity.all[other_id]
@@ -115,12 +133,18 @@ class Entity:
                     # TODO: this should be a we read for other_entiy property for how much overlap we allow before we react
                     if distance < other_entity.half_width:
                         other_entity.on_collide(other_entity, self)
-                        
+                    # TODO: would there a case for calling our own on collide method?
+                    
                 if other_entity.is_solid:
                     return [other_entity]
         return []
 
     def get_point_for_direction(self, direction: MovementDirection):
+        """
+        For a direction return the pixel x,y for the entity
+        :param direction:
+        :return: Tuple[int,int] - the pixel point for the direction
+        """
         if direction == MovementDirection.SOUTH:
             return self.bottom_middle
         elif direction == MovementDirection.NORTH:
@@ -134,12 +158,27 @@ class Entity:
         return self.middle
 
     def get_point_for_approaching_direction(self, direction: MovementDirection):
+        """
+        For direction return the opposing directions pixel x,y for the entity
+        :param direction:
+        :return: Tuple[int,int] - the pixel point for the opposing direction
+        """
         return self.get_point_for_direction(DIRECTION_INVERSE[direction])
 
     def get_tick_rate(self):
+        """
+        What is the entity's tick rate
+        :return:
+        """
         return self.tick_rate
 
     def can_think(self, frame_count):
+        """
+        Check if sufficient time has elapsed for this entity to make another decision.
+        Also update the `last_tick` with `frame_count`
+        :param frame_count:
+        :return:
+        """
         if self.last_tick is None:
             self.last_tick = frame_count
             return True
@@ -153,12 +192,12 @@ class Entity:
         return False
 
     def think(self, frame_count):
-        if self.can_think(frame_count):
-            #self.last_tick = frame_count
-            # this was added to get around current grid implementation
-            # only support one thing in the data layer at a time
-            self.refresh_dimensions()
-        else:
+        """
+        Make decisions and do things. It's expected you'd override this in classes inheriting from Entity
+        :param frame_count:
+        :return:
+        """
+        if not self.can_think(frame_count):
             return False
         
         return True

@@ -29,6 +29,7 @@ COLOUR_MAP = {
     Colour.YELLOW.value: arcade.color.YELLOW,
 }
 
+
 class MyGame(arcade.Window):
 
     def __init__(self, width, height):
@@ -38,11 +39,16 @@ class MyGame(arcade.Window):
         arcade.set_background_color(arcade.color.BLACK)
 
         self.game = None
+        
         # If you have sprite lists, you should create them here,
         # and set them to None
         self.shape_walls = None
-
+        
     def setup(self):
+        """
+        Setup shapes and sprites (if we had any) and initialise the game class
+        :return:
+        """
         # Create your sprites and sprite lists here
         self.game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 1, grid_layers = 4)
 
@@ -50,9 +56,17 @@ class MyGame(arcade.Window):
 
         self.game.game_message = "Lead the Rabbit home"
 
+        self.create_wall_shape()
+
+    def create_wall_shape(self):
+        """
+        Instead of rendering each wall block, we create a single shape which can be drawn in a single call,
+        rather than a call for each wall block
+        :return:
+        """
         point_list = []
         color_list = []
-
+        
         # create the walls into a single shape
         walls = self.game.walls
         for wall in walls:
@@ -61,15 +75,23 @@ class MyGame(arcade.Window):
             point_list.append(points[1])
             point_list.append(points[2])
             point_list.append(points[3])
-
+        
+            # as we have 4 points
             for i in range(4):
                 color_list.append(COLOUR_MAP[wall.base_colour])
-
+                
         self.shape_walls.append(
             arcade.create_rectangles_filled_with_colors(point_list, color_list)
         )
 
     def get_entity_dimensions(self, entity: Entity):
+        """
+        Remap the co-ordinates from the grid to positions required by aracade.
+        As 0,0 is the bottom left position in arcade, but the grid see's 0,0 as top left
+        
+        :param entity:
+        :return:
+        """
         top_left = list(entity.top_left)
         top_left[1] = SCREEN_HEIGHT - top_left[1]
         top_right = list(entity.top_right)
@@ -78,17 +100,21 @@ class MyGame(arcade.Window):
         bottom_left[1] = SCREEN_HEIGHT - bottom_left[1]
         bottom_right = list(entity.bottom_right)
         bottom_right[1] = SCREEN_HEIGHT - bottom_right[1]
-        return (top_left, top_right, bottom_right, bottom_left)
+        return top_left, top_right, bottom_right, bottom_left
 
     def draw_entity(self, entity: Entity):
-
+        """
+        Draw the entity as a block, converting the y pixels values for 0,0 being bottom left not top left
+        :param entity:
+        :return:
+        """
         left = (entity.x - entity.half_width)
         right = (entity.x + entity.half_width)
         # because arcade 0 on y is the bottom of the screen not the top
         bottom = abs((entity.y + entity.half_height) - SCREEN_HEIGHT)
-        #bottom = entity.y - entity.half_height - SCREEN_HEIGHT
+        # bottom = entity.y - entity.half_height - SCREEN_HEIGHT
         top = abs((entity.y - entity.half_height) - SCREEN_HEIGHT)
-        #top = entity.y + entity.half_height - SCREEN_HEIGHT
+        # top = entity.y + entity.half_height - SCREEN_HEIGHT
 
         arcade.draw_lrtb_rectangle_filled(
             left = left, 
@@ -144,7 +170,6 @@ class MyGame(arcade.Window):
             anchor_y = "top",
         )
 
-        draw_item_ids = False
         items = game.items.copy()
         for item in items:
             item.think(0)
@@ -153,7 +178,6 @@ class MyGame(arcade.Window):
         del items
 
         npcs = game.npcs.copy()
-
         for npc in npcs:
             npc.think(0)
             self.draw_entity(npc)
@@ -162,17 +186,9 @@ class MyGame(arcade.Window):
 
         self.draw_entity(game.player)
 
-        draw_grid = False
-        if draw_grid:
-            pass
-            #grid = self.game.grid
-            #for point in grid.flat_pixel_positions:
-            #    pyxel.pix(point[1], point[0], Colour.PINK.value)
-
         # Finish the render.
         # Nothing will be drawn without this.
         # Must happen after all draw commands
-
 
     def update(self, delta_time):
         """
@@ -285,6 +301,58 @@ class MyGame(arcade.Window):
         if button == arcade.MOUSE_BUTTON_LEFT:
             self.game.debug_x_y(x, grid_y)
             # self.game.player.move_to_point(x, grid_y)
+    
+    # from here below are inherited methods in which we are just calling the super class's method
+    def _create(self):
+        return super()._create()
+        
+    def _recreate(self, changes):
+        return super()._recreate(changes)
+
+    def flip(self):
+        return super().flip()
+
+    def switch_to(self):
+        return super().switch_to()
+
+    def set_caption(self, caption):
+        return super().set_caption(caption)
+
+    def set_minimum_size(self, width, height):
+        return super().set_minimum_size(width, height)
+
+    def set_maximum_size(self, width, height):
+        return super().set_maximum_size(width, height)
+
+    def set_location(self, x, y):
+        return super().set_location(x, y)
+
+    def activate(self):
+        return super().activate()
+
+    def minimize(self):
+        return super().minimize()
+
+    def maximize(self):
+        return super().maximize()
+
+    def set_vsync(self, vsync):
+        return super().set_vsync(vsync)
+
+    def set_mouse_platform_visible(self, platform_visible = None):
+        return super().set_mouse_platform_visible(platform_visible)
+
+    def set_exclusive_mouse(self, exclusive = True):
+        return super().set_exclusive_mouse(exclusive)
+
+    def set_exclusive_keyboard(self, exclusive = True):
+        return super().set_exclusive_keyboard(exclusive)
+
+    def get_system_mouse_cursor(self, name):
+        return super().get_system_mouse_cursor(name)
+
+    def dispatch_events(self):
+        return super().dispatch_events()
 
 
 def main():

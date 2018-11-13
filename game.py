@@ -32,6 +32,10 @@ class Game():
         self.load_level()
 
     def reset_game(self):
+        """
+        Restart the game and reset the game level
+        :return:
+        """
         self.is_running = False
         self.player = None
         self.rabbit = None
@@ -47,6 +51,10 @@ class Game():
         Entity.grid = self.grid
 
     def load_level(self):
+        """
+        Load the level
+        :return:
+        """
         self.reset_game()
 
         with open('level.txt') as f:
@@ -73,8 +81,14 @@ class Game():
         self.is_running = True
 
     def add_player(self, row, column):
+        """
+        Add the player to game map
+        :param row:
+        :param column:
+        :return:
+        """
         x, y = self.grid.get_pixel_center(row, column)
-        print("player:", x, y)
+        
         self.player = MovableEntity(
             x, y, self.tile_size-2, self.tile_size-2,
             Colour.GREEN, 0.10,
@@ -88,8 +102,14 @@ class Game():
         self.player.acceleration_rate = 0.25
 
     def add_rabbit(self, row, column):
+        """
+        Add the rabbit to the game map
+        :param row:
+        :param column:
+        :return:
+        """
         x, y = self.grid.get_pixel_center(row, column)
-        print("rabbit:", x, y)
+        
         self.rabbit = MovableEntity(
             x, y, self.tile_size-2, self.tile_size-2,
             Colour.WHITE, 0.10, False, self.npcs,
@@ -100,16 +120,34 @@ class Game():
         self.rabbit.acceleration_rate = 0.5
 
     def remove_item(self, item):
+        """
+        Remove an item from the game map
+        :param item:
+        :return:
+        """
         self.grid - item.id
         if item in self.items:
             self.items.remove(item)
 
     def add_speed_down(self, row, column):
+        """
+        Add a speed down item to the game map
+        :param row:
+        :param column:
+        :return:
+        """
         x, y = self.grid.get_pixel_center(row, column)
         item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.RED, 5, False, self.items, Layer.ITEMS)
         item.on_collide = self.apply_speed_down
 
     def apply_speed_down(self, apply_from, apply_to):
+        """
+        On an entity `apply_to` colliding with `apply_from` apply a speed down to `apply_to` and remove `apply_from`
+        from the game map
+        :param apply_from:
+        :param apply_to:
+        :return:
+        """
         try:
             acceleration_modifier = apply_to.acceleration_rate / 2
             apply_to.acceleration_rate -= acceleration_modifier
@@ -119,11 +157,24 @@ class Game():
         self.remove_item(apply_from)
 
     def add_speed_up(self, row, column):
+        """
+        Add a speed up item to the game map
+        :param row:
+        :param column:
+        :return:
+        """
         x, y = self.grid.get_pixel_center(row, column)
         item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.LIGHT_BLUE, 5, False, self.items, Layer.ITEMS)
         item.on_collide = self.apply_speed_up
 
     def apply_speed_up(self, apply_from, apply_to):
+        """
+        On an entity `apply_to` colliding with `apply_from` apply a speed up to `apply_to` and remove `apply_from`
+        from the game map
+        :param apply_from:
+        :param apply_to:
+        :return:
+        """
         try:
             acceleration_modifier = apply_to.acceleration_rate / 2
             apply_to.acceleration_rate += acceleration_modifier
@@ -133,34 +184,70 @@ class Game():
         self.remove_item(apply_from)
 
     def add_carrot(self, row, column):
+        """
+        Add a carrot to the game map
+        :param row:
+        :param column:
+        :return:
+        """
         x, y = self.grid.get_pixel_center(row, column)
         item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.ORANGE, 5, False, self.items, Layer.ITEMS)
         item.on_collide = self.eat_carrot
 
     def eat_carrot(self, carrot, eater):
+        """
+        If `eater` is our rabbit, then remove carrot from the game map and increase the score
+        :param carrot:
+        :param eater:
+        :return:
+        """
         if eater.id != self.rabbit.id:
             return
         self.remove_item(carrot)
         self.score += 1
 
     def add_end(self, row, column):
+        """
+        Add the end/goal to the game map
+        :param row:
+        :param column:
+        :return:
+        """
         x, y = self.grid.get_pixel_center(row, column)
         item = Entity(x, y, self.tile_size, self.tile_size, Colour.GREY, 5, False, self.items, Layer.WORLD)
         item.on_collide = self.check_end
 
     def check_end(self, goal, other):
+        """
+        If something collides with the goal check if it's the rabbit
+        If it is the rabbit then we've completed the level
+        :param goal:
+        :param other:
+        :return:
+        """
         if other.id != self.rabbit.id:
             return
         self.game_message = "YOU WIN! Press R to restart"
         print(self.game_message)
 
     def start_rabbit(self):
+        """
+        Make the rabbit follow the player, set the rabbits target to be the player and set it's `target_offset`
+        :return:
+        """
         self.rabbit.target_offset = self.tile_size * 2
         self.rabbit.target = self.player.id
         self.rabbit.movement_type = MovementType.CHASE
         self.rabbit.movement_speed = 3
 
     def add_wall(self, row, column):
+        """
+        Add a wall to the game world
+        DEPRECIATED - Walls are being rendered as a single shape
+        :param row:
+        :param column:
+        :return:
+        """
         # add_at_grid_position
         x, y = self.grid.get_pixel_center(row, column)
         Entity(
@@ -173,9 +260,21 @@ class Game():
         )
 
     def get_grid_data(self, x, y):
+        """
+        Get the data in our grid at a given x,y pixel position
+        :param x:
+        :param y:
+        :return:
+        """
         return self.grid[x, y]
 
     def debug_x_y(self, x, y):
+        """
+        Print out debug information our grid at a given x,y pixel position
+        :param x:
+        :param y:
+        :return:
+        """
         print("id:", self.get_grid_data(x, y))
         print("nearby:", self.grid.query(
             x, y, k = 8, distance_upper_bound = self.tile_size * 2
