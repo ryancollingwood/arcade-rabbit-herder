@@ -6,6 +6,7 @@ from typing import List, Tuple
 from consts.colour import Colour
 from consts.direction import MovementDirection, DIRECTION_MAGNITUDES
 from entity import Entity
+from pathfinding import astar
 
 
 class MovementType(Enum):
@@ -16,6 +17,7 @@ class MovementType(Enum):
     CONTROLLED = 1  # Movement is from external source i.e. the player
     PATROL = 2  # Randomly pick a destination around within an area, do this again upon reaching that destination
     CHASE = 3  # Try to move to a target, which itself may be changing it's position i.e. move to attack player
+    PATH = 4  # Given a target get a path to it
 
 
 class MovableEntity(Entity):
@@ -35,6 +37,7 @@ class MovableEntity(Entity):
         super().__init__(x, y, height, width, base_colour, tick_rate, is_solid, parent_collection, grid_layer)
 
         self.destination = None
+        self.last_destination = None
         self.movement_type = movement_type
         self.target = target
         self.target_offset = target_offset
@@ -45,6 +48,8 @@ class MovableEntity(Entity):
         self.acceleration = 0
         self.max_acceleration = 1
         self.acceleration_rate = 0.01
+        self.path = None
+        self.path_step = None
         
     def think(self, frame_count):
         """
@@ -74,22 +79,13 @@ class MovableEntity(Entity):
             return True
         
         result = False
-
-        if self.movement_type == MovementType.NONE:
-            return
-    
-        if self.movement_type == MovementType.CHASE:
-            destination_entity: MovableEntity = Entity.all[self.target]
-            self.destination = destination_entity.grid_pixels
-        elif self.movement_type == MovementType.CONTROLLED:
-            movement_direction = self.movement_direction
-            if movement_direction == MovementDirection.NONE:
-                self.destination = None
-            else: 
-                magnitude = DIRECTION_MAGNITUDES[movement_direction]
-                self.destination = (self.middle[0] + magnitude[0], self.middle[1] + magnitude[1])
+        
+        destination = self.get_destination()
+        if self.destination != destination:
+            self.last_destination = self.destination
+            self.destination = destination
             
-        if self.destination is None:
+        if destination is None:
             return result
 
         move_both = False
@@ -149,6 +145,61 @@ class MovableEntity(Entity):
                 self.destination = (randint(0, 200), randint(0, 200))
     
         return False
+    
+    def get_destination(self):
+        """
+        Determine our new destination
+        :return:
+        """
+        
+        destination = None
+        
+        if self.movement_type == MovementType.NONE:
+            return destination
+        
+        if self.target is not None:
+            try:
+                destination_entity: MovableEntity = Entity.all[self.target]
+            except IndexError as e:
+                # this could happen if we were chasing an item that has been
+                # eaten by someone else
+                warn(f"Target {self.target} not found in grid")
+                return None
+    
+        if self.movement_type == MovementType.CHASE:
+            destination = destination_entity.grid_pixels
+            
+        elif self.movement_type == MovementType.PATH:
+            final_destination = destination_entity.grid_pixels
+            if final_destination != self.last_destination:
+                self.reset_path()
+                self.get_path(final_destination[0], final_destination[1])
+            
+        elif self.movement_type == MovementType.CONTROLLED:
+            movement_direction = self.movement_direction
+            if movement_direction == MovementDirection.NONE:
+                destination = None
+            else:
+                magnitude = DIRECTION_MAGNITUDES[movement_direction]
+                destination = (self.middle[0] + magnitude[0], self.middle[1] + magnitude[1])
+                
+        return destination
+    
+    def reset_path(self):
+        """
+        Reset our current path
+        :return:
+        """
+        self.path = None
+        self.path_step = None
+        
+    def get_path(self, x ,y):
+        """
+        Get a path to the target x,y - which will be looked up to row, column for A* purposes
+        :return:
+        """
+        self.path = []
+        self.path_step = 0
 
     def move_in_plane(self,
                       current: int, destination: int,

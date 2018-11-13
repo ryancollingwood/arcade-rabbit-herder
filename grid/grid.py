@@ -152,11 +152,22 @@ class Grid():
         :return:
         """
         result = self.map_pixel_center_positions[row][column]
-        return (result[1], result[0])
+        return result[1], result[0]
+    
+    def get_column_row_for_pixels(self, x, y):
+        """
+        Get the column, row for a given x, y
+        :param x:
+        :param y:
+        :return:
+        """
+        center_x, center_y = self.get_pos_for_pixels(x, y)
+        
+        pass
     
     def get_pos_for_pixels(self, x, y):
         """
-        Reverse lookup for grid position based on pixels
+        Reverse lookup for grid pixel centre based on given x,y position
         :param x:
         :param y:
         :return:
@@ -168,7 +179,7 @@ class Grid():
         # query_result[0] - The distances to the nearest neighbour
         # query_result[1] - The locations of the neighbours
         yx = self.flat_pixel_positions[query_result[1]]
-        return (yx[1], yx[0],)
+        return yx[1], yx[0]
     
     def query_tree(self, x, y, k = 1, distance_upper_bound = np.inf):
         """
@@ -300,6 +311,7 @@ class Grid():
         :param row:
         :param column:
         :param fov:
+        :param origin_angle:
         :param tile_distance:
         :return:
         """
