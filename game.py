@@ -237,7 +237,7 @@ class Game():
         """
         self.rabbit.target_offset = self.tile_size * 2
         self.rabbit.target = self.player.id
-        self.rabbit.movement_type = MovementType.CHASE
+        self.rabbit.movement_type = MovementType.PATH # MovementType.CHASE
         self.rabbit.movement_speed = 3
 
     def add_wall(self, row, column):

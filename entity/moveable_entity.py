@@ -59,27 +59,59 @@ class MovableEntity(Entity):
         if super().think(frame_count):
             self.move()
 
+    @staticmethod
+    def need_to_move_in_plane(current, lower_bound, middle, upper_bound):
+        """
+        Check that we even need to move
+        :param current:
+        :param lower_bound:
+        :param middle:
+        :param upper_bound:
+        :return:
+        """
+        if current in [lower_bound, middle, upper_bound]:
+            return False
+        return True
+
+    def need_to_move_horizontal(self, target_xy):
+        """
+        Do we need to make changes on the horizontal plane to get to our destination?
+        :return:
+        """
+        move_horizontal, destination_offset_boundary_x = self.is_within_destination_and_offset(
+            self.x, target_xy[0]
+        )
+
+        if move_horizontal:
+            move_horizontal = self.need_to_move_in_plane(
+                self.x, destination_offset_boundary_x[0], target_xy[0], destination_offset_boundary_x[1]
+            )
+
+        return move_horizontal, destination_offset_boundary_x
+
+    def need_to_move_vertical(self, target_xy):
+        """
+        Do we need to make changes on the vertical plane to get to our destination?
+        :return:
+        """
+        move_vertical, destination_offset_boundary_y = self.is_within_destination_and_offset(
+            self.y, target_xy[1]
+        )
+
+        if move_vertical:
+            move_vertical = self.need_to_move_in_plane(
+                self.y, destination_offset_boundary_y[0], target_xy[1], destination_offset_boundary_y[1]
+            )
+
+        return move_vertical, destination_offset_boundary_y
+
     def move(self):
         """
         Determine which direction we should move and conditionally set our destination
         :return:
         """
-        
-        def need_to_move(current, lower_bound, middle, upper_bound):
-            """
-            Check that we even need to move
-            :param current:
-            :param lower_bound:
-            :param middle:
-            :param upper_bound:
-            :return:
-            """
-            if current in [lower_bound, middle, upper_bound]:
-                return False
-            return True
-        
         result = False
-        
+
         destination = self.get_destination()
         if self.destination != destination:
             self.last_destination = self.destination
@@ -90,24 +122,9 @@ class MovableEntity(Entity):
 
         move_both = False
     
-        move_horizontal, destination_offset_boundary_x = self.is_within_destination_and_offset(
-            self.x, self.destination[0]
-        )
-        
-        if move_horizontal:
-            move_horizontal = need_to_move(
-                self.x, destination_offset_boundary_x[0], self.destination[0], destination_offset_boundary_x[1]
-            )
-            
-        move_vertical, destination_offset_boundary_y = self.is_within_destination_and_offset(
-            self.y, self.destination[1]
-        )
-        
-        if move_vertical:
-            move_vertical = need_to_move(
-                self.y, destination_offset_boundary_y[0], self.destination[1], destination_offset_boundary_y[1]
-            )
-    
+        move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(self.destination)
+        move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(self.destination)
+
         if move_horizontal and move_vertical:
             move_both = True
             move_horizontal = choice([True, False])
@@ -170,11 +187,34 @@ class MovableEntity(Entity):
             destination = destination_entity.grid_pixels
             
         elif self.movement_type == MovementType.PATH:
+
             final_destination = destination_entity.grid_pixels
-            if final_destination != self.last_destination:
+
+            if not self.path:
+                # do we need to get a path?
                 self.reset_path()
                 self.get_path(final_destination[0], final_destination[1])
-            
+            else:
+                if final_destination not in self.path:
+                    # if we've reached our destination, then reset the path
+                    self.reset_path()
+                    # TODO raise that we need a new target
+                elif self.path_step < len(self.path) - 1:
+                    # can we progress on the path?
+                    row, column = self.path[self.path_step]
+                    destination = Entity.grid.get_pixel_center(row, column)
+
+                    move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(destination)
+                    move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(destination)
+
+                    if not move_horizontal and not move_vertical:
+                        self.path_step += 1
+                        row, column = self.path[self.path_step]
+                        destination = Entity.grid.get_pixel_center(row, column)
+                else:
+                    self.reset_path()
+                    self.get_path(final_destination[0], final_destination[1])
+
         elif self.movement_type == MovementType.CONTROLLED:
             movement_direction = self.movement_direction
             if movement_direction == MovementDirection.NONE:
@@ -198,7 +238,12 @@ class MovableEntity(Entity):
         Get a path to the target x,y - which will be looked up to row, column for A* purposes
         :return:
         """
-        self.path = []
+        end_row, end_column = Entity.grid.get_column_row_for_pixels(x, y)
+        start_row, start_column = Entity.grid.get_column_row_for_pixels(self.x, self.y)
+
+        self.path = astar(Entity.grid.grid_for_pathing(), (start_row, start_column), (end_row, end_column))
+        # TODO convert from row,col to pixels!!!
+
         self.path_step = 0
 
     def move_in_plane(self,

@@ -15,7 +15,10 @@ class Grid():
         :param flip_x:
         :param flip_y:
         """
-        
+
+        self.max_rows = y_max
+        self.max_columns = x_max
+
         # generate the indicies for our grid size
         # the indicies are the positions of our grid
         y_mesh, x_mesh = np.indices((y_max, x_max))
@@ -162,8 +165,19 @@ class Grid():
         :return:
         """
         center_x, center_y = self.get_pos_for_pixels(x, y)
-        
-        pass
+        x_match = self.map_pixel_center_positions[:, 1] == center_x
+        y_match = self.map_pixel_center_positions[:, 0] == center_y
+
+        # this assmues there is a match and only one match :/
+        # TODO: handle != 1 match
+        row = np.where(y_match)[0][0]
+        column = np.where(x_match)[0][0]
+
+        return row, column
+
+    def grid_for_pathing(self):
+        # TODO: validate the order of y and x are correct
+        return np.reshape(self.data[0], (self.max_rows, self.max_columns))
     
     def get_pos_for_pixels(self, x, y):
         """
