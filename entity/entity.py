@@ -114,6 +114,20 @@ class Entity:
         self.last_x = self.x
         self.last_y = self.y
 
+    def set_x(self, x):
+        if x > Entity.grid.max_x:
+            print(self, x, "is greater than ", Entity.grid.max_x)
+        elif x < 0:
+            print(self, x, "is less than 0")
+        self.x = x
+
+    def set_y(self, y):
+        if y > Entity.grid.max_y:
+            print(self, y, "is greater than ", Entity.grid.max_y)
+        elif y < 0:
+            print(self, y, "is less than 0")
+        self.y = y
+
     # TODO: move this into colllision module
     def collide(self, other_id, distance):
         """

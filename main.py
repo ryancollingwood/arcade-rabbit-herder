@@ -185,10 +185,28 @@ class MyGame(arcade.Window):
         del npcs
 
         self.draw_entity(game.player)
+        
+        if game.rabbit.path:
+            self.draw_path(game.rabbit.path)
 
         # Finish the render.
         # Nothing will be drawn without this.
         # Must happen after all draw commands
+
+    def draw_path(self, path):
+        """
+        Draw a path for visual debugging
+        :param path:
+        :return:
+        """
+        for path_point in path:
+            arcade.draw_lrtb_rectangle_filled(
+                left = path_point[0] - 3,
+                right = path_point[0] + 3,
+                bottom = abs(path_point[1] + 3 - SCREEN_HEIGHT),
+                top = abs(path_point[1] - 3 - SCREEN_HEIGHT),
+                color = COLOUR_MAP[Colour.YELLOW.value],
+            )
 
     def update(self, delta_time):
         """

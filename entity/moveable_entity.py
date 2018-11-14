@@ -41,6 +41,7 @@ class MovableEntity(Entity):
         self.movement_type = movement_type
         self.target = target
         self.target_offset = target_offset
+        self.original_target_offset = target_offset
         self.movement_direction = MovementDirection.NONE
         self.last_movement_direction = None
         self.base_speed = 1
@@ -187,7 +188,10 @@ class MovableEntity(Entity):
             destination = destination_entity.grid_pixels
             
         elif self.movement_type == MovementType.PATH:
-
+            # set the target offset to 0 s that we move along points
+            # having a target offset may mean we don’t progress to the next point
+            self.target_offset = 0
+            # TODO: incoperate offset into final_destination calculation
             final_destination = destination_entity.grid_pixels
 
             if not self.path:
@@ -199,18 +203,19 @@ class MovableEntity(Entity):
                     # if we've reached our destination, then reset the path
                     self.reset_path()
                     # TODO raise that we need a new target
-                elif self.path_step < len(self.path) - 1:
+                elif self.path_step < len(self.path)-1:
                     # can we progress on the path?
-                    row, column = self.path[self.path_step]
-                    destination = Entity.grid.get_pixel_center(row, column)
+                    destination = self.path[self.path_step]
 
                     move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(destination)
                     move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(destination)
 
                     if not move_horizontal and not move_vertical:
                         self.path_step += 1
-                        row, column = self.path[self.path_step]
-                        destination = Entity.grid.get_pixel_center(row, column)
+                        destination = self.path[self.path_step]
+                        
+                    if destination == self.path[-1]:
+                        self.target_offset = self.original_target_offset
                 else:
                     self.reset_path()
                     self.get_path(final_destination[0], final_destination[1])
@@ -241,10 +246,13 @@ class MovableEntity(Entity):
         end_row, end_column = Entity.grid.get_column_row_for_pixels(x, y)
         start_row, start_column = Entity.grid.get_column_row_for_pixels(self.x, self.y)
 
-        self.path = astar(Entity.grid.grid_for_pathing(), (start_row, start_column), (end_row, end_column))
-        # TODO convert from row,col to pixels!!!
-
-        self.path_step = 0
+        # TODO this will fail if any of thses are 0
+        if start_row and start_column and end_row and end_column:
+            path = astar(Entity.grid.grid_for_pathing(), (start_row, start_column), (end_row, end_column))
+        
+            # TODO convert from row,col to pixels!!!
+            self.path = [Entity.grid.get_pixel_center(p[0], p[1]) for p in path]
+            self.path_step = 0
 
     def move_in_plane(self,
                       current: int, destination: int,
@@ -402,17 +410,18 @@ class MovableEntity(Entity):
         if len(collide_entities) == 0:
             self.set_direction(new_direction)
 
-            self.x = (self.x + x_magnitude)
-            self.y = (self.y + y_magnitude)
+            self.set_x(self.x + x_magnitude)
+            self.set_y(self.y + y_magnitude)
             
             # if not controlled movement check we don't overshoot
             if self.movement_type == MovementType.CONTROLLED:
                 self.destination = (self.x + x_magnitude, self.y + y_magnitude)
-                self.x = (self.x + x_magnitude)
-                self.y = (self.y + y_magnitude)
+                self.set_x(self.x + x_magnitude)
+                self.set_y(self.y + y_magnitude)
             else:
-                self.x = finalise_plane_position(self.x, self.destination[0], x_magnitude, self.target_offset)
-                self.y = finalise_plane_position(self.y, self.destination[1], y_magnitude, self.target_offset)
+                if self.destination:
+                    self.set_x(finalise_plane_position(self.x, self.destination[0], x_magnitude, self.target_offset))
+                    self.set_y(finalise_plane_position(self.y, self.destination[1], y_magnitude, self.target_offset))
 
             result = True
             
@@ -507,13 +516,13 @@ class MovableEntity(Entity):
                             if clamp_y != 0 and abs(clamp_y) > abs(y_magnitude):
                                 continue
 
-                            self.y += clamp_y
+                            self.set_y(self.y + clamp_y)
                         
                         elif direction in [MovementDirection.EAST, MovementDirection.WEST]:
                             if clamp_x != 0 and abs(clamp_x) > abs(x_magnitude):
                                 continue
 
-                            self.x += clamp_x
+                            self.set_x(self.x + clamp_x)
 
                         # set direction to none and refresh since we've clamped
                         self.destination = (self.x, self.y,)

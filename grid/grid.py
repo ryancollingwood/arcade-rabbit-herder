@@ -23,6 +23,9 @@ class Grid():
         # the indicies are the positions of our grid
         y_mesh, x_mesh = np.indices((y_max, x_max))
 
+        x_mesh = x_mesh + 1
+        y_mesh = y_mesh + 1
+
         if flip_x:
             x_mesh = np.flip(x_mesh)
         if flip_y:
@@ -33,14 +36,17 @@ class Grid():
         self.tile_size = tile_size
         self.half_tile_size = (self.tile_size / 2.0)
         
-        x_mesh = ((x_mesh + 1) * self.tile_size) - self.half_tile_size 
-        y_mesh = ((y_mesh + 1) * self.tile_size) - self.half_tile_size
+        self.x_mesh = (x_mesh * self.tile_size) - self.half_tile_size
+        self.y_mesh = (y_mesh * self.tile_size) - self.half_tile_size
         
         # let's persist center positions
-        pixel_center_positions = np.squeeze(np.dstack([y_mesh.ravel(), x_mesh.ravel()]))
+        pixel_center_positions = np.squeeze(np.dstack([self.y_mesh.ravel(), self.x_mesh.ravel()]))
         
         # property `map_pixel_center_positions` is for assisting human lookups of the grid
         self.map_pixel_center_positions = np.squeeze(np.reshape(pixel_center_positions, (y_max, x_max, 2)))
+        
+        self.max_x = np.max(self.x_mesh)
+        self.max_y = np.max(self.y_mesh)
         
         # property `flat_pixel_positions` is for assisting computer lookup of the grid and
         # reverse lookups for pixels to positions
@@ -164,20 +170,31 @@ class Grid():
         :param y:
         :return:
         """
+        # get the center values for the x,y
         center_x, center_y = self.get_pos_for_pixels(x, y)
-        x_match = self.map_pixel_center_positions[:, 1] == center_x
-        y_match = self.map_pixel_center_positions[:, 0] == center_y
+        
+        # find the intersection of the x and y values in our grid returns and array of array of array of bool
+        match = (self.map_pixel_center_positions[:, : , 1] == center_x) & (self.map_pixel_center_positions[:, : , 0] == center_y)
+        
+        # be we need the indexes
+        result_index = np.where(match)
 
         # this assmues there is a match and only one match :/
         # TODO: handle != 1 match
-        row = np.where(y_match)[0][0]
-        column = np.where(x_match)[0][0]
-
-        return row, column
+        row = result_index[0]
+        column = result_index[1]
+        
+        if len(row) > 0 and len(column) > 0:
+            return row[0], column[0]
+        else:
+            print(f"cannot find xy: {x},{y} in grid")
+            return None, None
 
     def grid_for_pathing(self):
         # TODO: validate the order of y and x are correct
-        return np.reshape(self.data[0], (self.max_rows, self.max_columns))
+        path_grid = np.reshape(self.data[0], (self.max_rows, self.max_columns))
+        
+        return path_grid
     
     def get_pos_for_pixels(self, x, y):
         """
@@ -201,6 +218,7 @@ class Grid():
         :param x:
         :param y:
         :param k: (optional) The number of nearest neighbors to return.
+        :param distance_upper_bound: What's the maximum distance we're willing to consider as neighbours
         :return:
         """
         # query_result[0] - The distances to the nearest neighbour
@@ -242,7 +260,6 @@ class Grid():
 
         return None, None       
     
-
     def get_x_y_distances(self, x, y):
         """
         Get the distances for rows and columns from the given x, y pixel point.

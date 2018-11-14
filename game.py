@@ -47,7 +47,10 @@ class Game():
         self.debug_message = ""
 
         # reset and reassign the grid
-        self.grid = Grid(self.width, self.height, self.tile_size, self.grid_layers, self.flip_x, self.flip_y)
+        x_max = (self.width // self.tile_size) + 1
+        y_max = (self.height // self.tile_size) + 1
+        
+        self.grid = Grid(x_max, y_max, self.tile_size, self.grid_layers, self.flip_x, self.flip_y)
         Entity.grid = self.grid
 
     def load_level(self):
@@ -275,7 +278,9 @@ class Game():
         :param y:
         :return:
         """
-        print("id:", self.get_grid_data(x, y))
+        print("id:", self.get_grid_data(x, y), "x:", x, "y:", y)
         print("nearby:", self.grid.query(
             x, y, k = 8, distance_upper_bound = self.tile_size * 2
         ))
+        
+        self.game_message = str(self.rabbit.destination)
