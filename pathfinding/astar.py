@@ -55,9 +55,9 @@ def astar(maze, start, end, allow_diagonal_movement = False):
     max_iterations = (len(maze) // 2) ** 2
 
     # what squares do we search
-    adjacent_squares = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0),)
     if allow_diagonal_movement:
-        adjacent_squares = [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+        adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1),)
 
     # Loop until you find the end
     while len(open_list) > 0:
@@ -109,15 +109,9 @@ def astar(maze, start, end, allow_diagonal_movement = False):
 
         # Loop through children
         for child in children:
-            child_is_closed = False
             
             # Child is on the closed list
-            for closed_child in closed_list:
-                if child == closed_child:
-                    child_is_closed = True
-                    break
-            
-            if child_is_closed:
+            if len([closed_child for closed_child in closed_list if closed_child == child]) > 0:
                 continue
 
             # Create the f, g, and h values
@@ -126,9 +120,8 @@ def astar(maze, start, end, allow_diagonal_movement = False):
             child.f = child.g + child.h
 
             # Child is already in the open list
-            for open_node in open_list:
-                if child == open_node and child.g > open_node.g:
-                    continue
+            if len([open_node for open_node in open_list if child == open_node and child.g > open_node.g]) > 0:
+                continue
 
             # Add the child to the open list
             open_list.append(child)
