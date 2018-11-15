@@ -1,6 +1,6 @@
 # Credit for this: Nicholas Swift
 # as found at https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
-
+from warnings import warn
 
 class Node:
     """
@@ -19,7 +19,16 @@ class Node:
         return self.position == other.position
 
 
-def astar(maze, start, end):
+def return_path(current_node):
+    path = []
+    current = current_node
+    while current is not None:
+        path.append(current.position)
+        current = current.parent
+    return path[::-1]  # Return reversed path
+
+
+def astar(maze, start, end, allow_diagonal_movement = False):
     """
     Returns a list of tuples as a path from the given start to the given end in the given maze
     :param maze:
@@ -40,10 +49,20 @@ def astar(maze, start, end):
 
     # Add the start node
     open_list.append(start_node)
+    
+    # Adding a stop condition
+    outer_iterations = 0
+    max_iterations = (len(maze) // 2) ** 2
+
+    # what squares do we search
+    adjacent_squares = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    if allow_diagonal_movement:
+        adjacent_squares = [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 
     # Loop until you find the end
     while len(open_list) > 0:
-
+        outer_iterations += 1
+        
         # Get the current node
         current_node = open_list[0]
         current_index = 0
@@ -51,6 +70,12 @@ def astar(maze, start, end):
             if item.f < current_node.f:
                 current_node = item
                 current_index = index
+                
+        if outer_iterations > max_iterations:
+            # if we hit this point return the path such as it is
+            # it will not contain the destination
+            warn("giving up on pathfinding too many iterations")
+            return return_path(current_node)
 
         # Pop current off open list, add to closed list
         open_list.pop(current_index)
@@ -58,16 +83,12 @@ def astar(maze, start, end):
 
         # Found the goal
         if current_node == end_node:
-            path = []
-            current = current_node
-            while current is not None:
-                path.append(current.position)
-                current = current.parent
-            return path[::-1] # Return reversed path
+            return return_path(current_node)
 
         # Generate children
         children = []
-        for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]: # Adjacent squares
+        
+        for new_position in adjacent_squares: # Adjacent squares
 
             # Get node position
             node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
@@ -88,11 +109,16 @@ def astar(maze, start, end):
 
         # Loop through children
         for child in children:
-
+            child_is_closed = False
+            
             # Child is on the closed list
             for closed_child in closed_list:
                 if child == closed_child:
-                    continue
+                    child_is_closed = True
+                    break
+            
+            if child_is_closed:
+                continue
 
             # Create the f, g, and h values
             child.g = current_node.g + 1

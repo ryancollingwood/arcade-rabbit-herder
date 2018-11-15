@@ -198,6 +198,10 @@ class MovableEntity(Entity):
                 # do we need to get a path?
                 self.reset_path()
                 self.get_path(final_destination[0], final_destination[1])
+                
+                # this is a hack in the case of pathfinding timing out
+                if final_destination not in self.path:
+                    self.path.append(final_destination)
             else:
                 if final_destination not in self.path:
                     # if we've reached our destination, then reset the path
