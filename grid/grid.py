@@ -88,7 +88,7 @@ class Grid():
             raise ValueError(f"Pixel positions not found in grid! {x}, {y}")
 
         result = []
-        for i in range(0,self.number_of_layers):
+        for i in range(0, self.number_of_layers):
             result.append(self.data[i][query_result[1]])
 
         return np.array(result).flatten()
@@ -191,7 +191,12 @@ class Grid():
             return None, None
 
     def grid_for_pathing(self):
-        # TODO: validate the order of y and x are correct
+        """
+        return the 0 layer grid which is expected to contain the solid and non-solid tiles for
+        pathing, where > 0 means a solid tile.
+        :return:
+        """
+        # Note the order of rows then columns
         path_grid = np.reshape(self.data[0], (self.max_rows, self.max_columns))
         
         return path_grid
@@ -307,7 +312,7 @@ class Grid():
         row_distances, column_distances = self.get_row_column_distances(row, column)
         return np.sqrt((column_distances * column_distances) + (row_distances * row_distances))
     
-    def get_straight_line_distance_to_point(self, start_row, start_column, end_row, end_column):
+    def get_straight_line_distance_between_rows_columns(self, start_row, start_column, end_row, end_column):
         """
         Get the straight line distance between two grid positions centers.
         :param start_row:
@@ -318,7 +323,19 @@ class Grid():
         """
         start_pixels = self.get_pixel_center(start_row, start_column)
         end_pixels = self.get_pixel_center(end_row, end_column)
-        return math.sqrt((start_pixels[1] * end_pixels[1]) + (start_pixels[0] * end_pixels[0]))
+        return self.get_straight_line_distances_between_pixels(start_pixels, end_pixels[1])
+    
+    @staticmethod
+    def get_straight_line_distances_between_pixels(start_xy, end_xy):
+        """
+        Get straight line distances between two xy pairs
+        :param start_xy:
+        :param end_xy:
+        :return:
+        """
+        x = (start_xy[0] - end_xy[0])
+        y = (start_xy[1] - end_xy[1])
+        return math.sqrt(x**2 + y**2)
     
     def get_angles(self, row, column, origin_angle):
         """

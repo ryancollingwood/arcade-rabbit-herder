@@ -131,7 +131,10 @@ class MovableEntity(Entity):
             move_horizontal = choice([True, False])
             move_vertical = not move_horizontal
         elif not move_horizontal and not move_vertical:
+            # we've probably arrived at our destination
+            # TODO: raise an event
             self.set_direction(MovementDirection.NONE)
+            self.reset_path()
     
         if move_horizontal:
             result = self.move_in_plane(
@@ -170,6 +173,19 @@ class MovableEntity(Entity):
         :return:
         """
         
+        def get_path_to_destination():
+            """
+            This is a temporary hack, to compensate for pathfinding timing out without finding the final_destination
+            IF we get a path without the destination then DONT reset as we might be able to get close enough by
+            following our existing path
+            :return:
+            """
+            new_path = self.get_path(final_destination[0], final_destination[1])
+    
+            # this is a hack in the case of path-finding timing out
+            if new_path is not None and final_destination in new_path:
+                self.reset_path(new_path)
+        
         destination = None
         
         if self.movement_type == MovementType.NONE:
@@ -191,23 +207,39 @@ class MovableEntity(Entity):
             # set the target offset to 0 s that we move along points
             # having a target offset may mean we don’t progress to the next point
             self.target_offset = 0
-            # TODO: incoperate offset into final_destination calculation
+            
+            # TODO: incorporate offset into final_destination calculation
             final_destination = destination_entity.grid_pixels
+            distance_to_final_final_destination = Entity.grid.get_straight_line_distances_between_pixels(
+                self.middle, destination_entity.middle
+            )
+            
+            # if our target is soild we cannot actually stand on them
+            # TODO: this assumes no entity is every bigger than Grid.tile_size in size
+            if destination_entity.is_solid and distance_to_final_final_destination <= Entity.grid.tile_size:
+                self.reset_path()
+                return None
 
             if not self.path:
-                # do we need to get a path?
-                self.reset_path()
-                self.get_path(final_destination[0], final_destination[1])
-                
-                # this is a hack in the case of pathfinding timing out
+                get_path_to_destination()
+            
+            if self.path:
                 if final_destination not in self.path:
-                    self.path.append(final_destination)
-            else:
-                if final_destination not in self.path:
-                    # if we've reached our destination, then reset the path
-                    self.reset_path()
-                    # TODO raise that we need a new target
-                elif self.path_step < len(self.path)-1:
+                    # continue on our current path as it will probably get as closer to the
+                    # destination anyways TODO: Make this a configurable setting?
+                    if self.path_step < len(self.path) - 1:
+                        # if our target is further than our original offset value then invalidate our current path
+                        if distance_to_final_final_destination > self.original_target_offset:
+                            self.reset_path()
+                        else:
+                            pass
+                    else:
+                        # if we've reached our destination, then reset the path
+                        # TODO raise that we need a new target
+                        self.reset_path()
+                    
+            if self.path:
+                if self.path_step < len(self.path)-1:
                     # can we progress on the path?
                     destination = self.path[self.path_step]
 
@@ -221,8 +253,7 @@ class MovableEntity(Entity):
                     if destination == self.path[-1]:
                         self.target_offset = self.original_target_offset
                 else:
-                    self.reset_path()
-                    self.get_path(final_destination[0], final_destination[1])
+                    get_path_to_destination()
 
         elif self.movement_type == MovementType.CONTROLLED:
             movement_direction = self.movement_direction
@@ -234,13 +265,18 @@ class MovableEntity(Entity):
                 
         return destination
     
-    def reset_path(self):
+    def reset_path(self, new_path = None):
         """
         Reset our current path
         :return:
         """
-        self.path = None
-        self.path_step = None
+        if new_path is None:
+            self.path = None
+            self.path_step = None
+        else:
+            self.path = new_path
+            self.path_step = 0
+
         
     def get_path(self, x ,y):
         """
@@ -254,9 +290,10 @@ class MovableEntity(Entity):
         if start_row and start_column and end_row and end_column:
             path = astar(Entity.grid.grid_for_pathing(), (start_row, start_column), (end_row, end_column))
         
-            # TODO convert from row,col to pixels!!!
-            self.path = [Entity.grid.get_pixel_center(p[0], p[1]) for p in path]
-            self.path_step = 0
+            # convert from row,col to pixels
+            return [Entity.grid.get_pixel_center(p[0], p[1]) for p in path]
+        
+        return None
 
     def move_in_plane(self,
                       current: int, destination: int,
