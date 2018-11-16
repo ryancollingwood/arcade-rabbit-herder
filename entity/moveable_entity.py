@@ -30,11 +30,12 @@ class MovableEntity(Entity):
                  x: int, y: int, height: int, width: int,
                  base_colour: Colour, tick_rate: int = 5,
                  is_solid: bool = True, parent_collection: List = None,
-                 grid_layer: int = 0, movement_type: MovementType = MovementType.PATROL,
+                 grid_layer: int = 0, entity_type_id: int = 0, movement_type: MovementType = MovementType.PATROL,
                  target = None, target_offset = 0
                  ):
         
-        super().__init__(x, y, height, width, base_colour, tick_rate, is_solid, parent_collection, grid_layer)
+        super().__init__(x, y, height, width, base_colour, tick_rate, is_solid,
+                         parent_collection, grid_layer, entity_type_id)
 
         self.destination = None
         self.last_destination = None
@@ -167,6 +168,23 @@ class MovableEntity(Entity):
     
         return False
     
+    def get_destination_target(self):
+        destination_entity = None
+    
+        if self.movement_type == MovementType.NONE:
+            return destination_entity
+    
+        if self.target is not None:
+            try:
+                destination_entity: MovableEntity = Entity.all[self.target]
+            except IndexError as e:
+                # this could happen if we were chasing an item that has been
+                # eaten by someone else
+                warn(f"Target {self.target} not found in grid")
+                return None
+            
+        return destination_entity
+    
     def get_destination(self):
         """
         Determine our new destination
@@ -185,25 +203,14 @@ class MovableEntity(Entity):
             # this is a hack in the case of path-finding timing out
             if new_path is not None and final_destination in new_path:
                 self.reset_path(new_path)
-        
+
         destination = None
+        destination_entity = self.get_destination_target()
         
-        if self.movement_type == MovementType.NONE:
-            return destination
-        
-        if self.target is not None:
-            try:
-                destination_entity: MovableEntity = Entity.all[self.target]
-            except IndexError as e:
-                # this could happen if we were chasing an item that has been
-                # eaten by someone else
-                warn(f"Target {self.target} not found in grid")
-                return None
-    
-        if self.movement_type == MovementType.CHASE:
+        if destination_entity and self.movement_type in [MovementType.CHASE, MovementType.PATH]:
             destination = destination_entity.grid_pixels
             
-        elif self.movement_type == MovementType.PATH:
+        if self.movement_type == MovementType.PATH:
             # set the target offset to 0 s that we move along points
             # having a target offset may mean we don’t progress to the next point
             self.target_offset = 0

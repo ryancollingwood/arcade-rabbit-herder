@@ -16,8 +16,8 @@ class Entity:
             x: int, y: int, height: int, width: int,
             base_colour: Colour, tick_rate: float = 0.5,
             is_solid: bool = True, parent_collection: List = None,
-            grid_layer = 0,
-        ):
+            grid_layer: int = 0, entity_type_id: int = 0
+    ):
         
         Entity.id += 1
         self.id = Entity.id
@@ -36,6 +36,7 @@ class Entity:
         self.tick_rate = tick_rate
         self.is_solid = is_solid
         self.on_collide = None
+        self.entity_type_id = entity_type_id
         self.grid_layer = grid_layer
 
         self.top_left = None

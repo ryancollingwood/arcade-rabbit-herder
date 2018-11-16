@@ -1,8 +1,8 @@
 from grid import Grid
-from entity import MovableEntity, Entity, MovementType
+from entity import MovableEntity, Entity, MovementType, ScoutingEntity
 from consts import Colour
 from consts import Layer
-
+from consts import EntityType
 
 class Game():
     def __init__(
@@ -96,7 +96,7 @@ class Game():
             x, y, self.tile_size-2, self.tile_size-2,
             Colour.GREEN, 0.10,
             is_solid = True, parent_collection = None,
-            grid_layer = Layer.PLAYER
+            grid_layer = Layer.PLAYER, entity_type_id = EntityType.PLAYER.value
         )
 
         self.player.movement_type = MovementType.CONTROLLED
@@ -113,10 +113,13 @@ class Game():
         """
         x, y = self.grid.get_pixel_center(row, column)
         
-        self.rabbit = MovableEntity(
+        self.rabbit = ScoutingEntity(
             x, y, self.tile_size-2, self.tile_size-2,
             Colour.WHITE, 0.10, False, self.npcs,
-            grid_layer = Layer.NPC
+            target = self.player.id,
+            grid_layer = Layer.NPC, entity_type_id = EntityType.RABBIT.value,
+            movement_type = MovementType.CHASE,
+            search_for_entity_types = [EntityType.CARROT.value], search_tile_range = 3
         )
         self.rabbit.base_speed = 4
         self.rabbit.max_acceleration = 8
@@ -140,7 +143,7 @@ class Game():
         :return:
         """
         x, y = self.grid.get_pixel_center(row, column)
-        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.RED, 5, False, self.items, Layer.ITEMS)
+        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.RED, 5, False, self.items, grid_layer = Layer.ITEMS)
         item.on_collide = self.apply_speed_down
 
     def apply_speed_down(self, apply_from, apply_to):
@@ -167,7 +170,7 @@ class Game():
         :return:
         """
         x, y = self.grid.get_pixel_center(row, column)
-        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.LIGHT_BLUE, 5, False, self.items, Layer.ITEMS)
+        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.LIGHT_BLUE, 5, False, self.items, grid_layer = Layer.ITEMS)
         item.on_collide = self.apply_speed_up
 
     def apply_speed_up(self, apply_from, apply_to):
@@ -194,7 +197,8 @@ class Game():
         :return:
         """
         x, y = self.grid.get_pixel_center(row, column)
-        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.ORANGE, 5, False, self.items, Layer.ITEMS)
+        item = Entity(x, y, self.tile_size-2, self.tile_size-2, Colour.ORANGE, 5, False, self.items,
+                      grid_layer = Layer.ITEMS, entity_type_id = EntityType.CARROT.value)
         item.on_collide = self.eat_carrot
 
     def eat_carrot(self, carrot, eater):
@@ -239,8 +243,6 @@ class Game():
         :return:
         """
         self.rabbit.target_offset = self.tile_size * 2
-        self.rabbit.target = self.player.id
-        self.rabbit.movement_type = MovementType.PATH # MovementType.CHASE
         self.rabbit.movement_speed = 3
 
     def add_wall(self, row, column):
@@ -259,7 +261,7 @@ class Game():
             self.tile_size, self.tile_size, Colour.BROWN,
             5, True,
             self.walls,
-            Layer.WORLD
+            grid_layer = Layer.WORLD
         )
 
     def get_grid_data(self, x, y):
