@@ -246,7 +246,7 @@ class MovableEntity(Entity):
                         self.reset_path()
                     
             if self.path:
-                if self.path_step < len(self.path)-1:
+                if self.path_step < len(self.path):
                     # can we progress on the path?
                     destination = self.path[self.path_step]
 
@@ -255,10 +255,9 @@ class MovableEntity(Entity):
 
                     if not move_horizontal and not move_vertical:
                         self.path_step += 1
-                        destination = self.path[self.path_step]
+                        if self.path_step != len(self.path):
+                            destination = self.path[self.path_step]
                         
-                    if destination == self.path[-1]:
-                        self.target_offset = self.original_target_offset
                 else:
                     get_path_to_destination()
 

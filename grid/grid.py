@@ -233,13 +233,20 @@ class Grid():
     
     def query(self, x, y, k = 1, distance_upper_bound = np.inf):
         query_result = self.query_tree(x, y, k = k, distance_upper_bound = distance_upper_bound)
+
+        if k == 1:
+            # pass
+            query_result = (np.array([query_result[0]]), np.array([query_result[1]]),)
+
         if query_result:
             try:
+
                 # filter out infinity
                 index_valid = np.where(query_result[0] < np.inf)[0]
 
                 # then get the indexes in our data that are < np.inf
                 entity_valid_indexes = query_result[1][index_valid]
+
                 # then for every layer get the values at the entity_valid_indexes using
                 # numpy array slicing and dicinng and no loops
                 entity_ids = self.data[0:self.number_of_layers, entity_valid_indexes]

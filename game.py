@@ -116,13 +116,14 @@ class Game():
         self.rabbit = ScoutingEntity(
             x, y, self.tile_size-2, self.tile_size-2,
             Colour.WHITE, 0.10, False, self.npcs,
-            target = self.player.id,
+            target = self.player.id, target_offset = self.tile_size * 2,
             grid_layer = Layer.NPC, entity_type_id = EntityType.RABBIT.value,
             movement_type = MovementType.CHASE,
             search_for_entity_types = [EntityType.CARROT.value], search_tile_range = 3
         )
         self.rabbit.base_speed = 4
         self.rabbit.max_acceleration = 8
+        self.rabbit.movement_speed = 4
         self.rabbit.acceleration_rate = 0.5
 
     def remove_item(self, item):
@@ -242,7 +243,6 @@ class Game():
         Make the rabbit follow the player, set the rabbits target to be the player and set it's `target_offset`
         :return:
         """
-        self.rabbit.target_offset = self.tile_size * 2
         self.rabbit.movement_speed = 3
 
     def add_wall(self, row, column):

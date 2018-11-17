@@ -29,10 +29,24 @@ class ScoutingEntity(MovableEntity):
         self.search_for_entity_types = value
         
     def get_destination_target(self):
+        # first check if we have a path, does it end in a entity of interest
+
+        def get_nearby_interesting(results):
+            return [x[0] for x in results if x[0] > 0 and Entity.all[
+                int(x[0])].entity_type_id in self.search_for_entity_types]
+
+        if self.path:
+            last_step = self.path[-1]
+            last_step_match = Entity.grid.query(last_step[0], last_step[1], k = 1)
+            last_step_nearby_match = get_nearby_interesting(last_step_match)
+            if len(last_step_nearby_match) > 0:
+                self.target = int(last_step_nearby_match[0])
+                return Entity.all[last_step_nearby_match[0]]
+
         # look for things of interest that are in range
-        nearby = Entity.grid.query(self.x, self.y, k = 8, distance_upper_bound = self.search_distance)
-        nearby_interesting: List[Entity] = [x[0] for x in nearby if x[0] > 0 and Entity.all[int(x[0])].entity_type_id in self.search_for_entity_types]
-        
+        nearby = Entity.grid.query(self.x, self.y, k = 16, distance_upper_bound = self.search_distance)
+        nearby_interesting = get_nearby_interesting(nearby)
+
         self.movement_type = self.original_movement_type
         self.target_offset = self.original_target_offset
         
@@ -41,10 +55,11 @@ class ScoutingEntity(MovableEntity):
         if len(nearby_interesting) > 0 and self.target == self.original_target:
             self.movement_type = MovementType.PATH
             self.target_offset = 0
-            self.target = Entity.all[nearby_interesting[0]]
-            return self.target
+            self.target = int(nearby_interesting[0])
+            return Entity.all[nearby_interesting[0]]
         else:
-            self.target = self.original_target
+            if len(nearby_interesting) == 0:
+                self.target = self.original_target
         
         # if no destination then use super().get_destination
         return super().get_destination_target()
