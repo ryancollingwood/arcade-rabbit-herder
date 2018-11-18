@@ -25,16 +25,16 @@ Keeping the scope small meant I'd get something complete, and then decide to ite
 I opted to have fairly fat classes, rather than going for a factory or a MVC approach. As I wanted the code to be approachable by having the behaviour and states of "things" together as much as possible.
 
 ## Future Goals
-[] Add Menus
-[] Add more levels
-[] Add more items
-[] Give the player the player the ability to place carrots
+- [ ] Add Menus
+- [ ] Add more levels
+- [ ] Add more items
+- [ ] Give the player the player the ability to place carrots
 
 ## Stretch Goals
-[] Animated sprites 
-[] Add hostile NPCs
-[] Configuration
-[] Sounds
-[] Music
-[] Use arcade provided collision (pymunk at this point)
-[] Build out testing with BDD like steps, I believe a simple game like this ould be a fun candidate to apply automated natural language like testing.
+- [ ] Animated sprites 
+- [ ] Add hostile NPCs
+- [ ] Configuration
+- [ ] Sounds
+- [ ] Music
+- [ ] Use arcade provided collision (pymunk at this point)
+- [ ] Build out testing with BDD like steps, I believe a simple game like this ould be a fun candidate to apply automated natural language like testing.
