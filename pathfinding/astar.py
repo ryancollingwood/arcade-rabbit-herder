@@ -34,6 +34,7 @@ def astar(maze, start, end, allow_diagonal_movement = False):
     :param maze:
     :param start:
     :param end:
+    :param allow_diagonal_movement: do we allow diagonal steps in our path
     :return:
     """
 

@@ -4,7 +4,7 @@ from scipy.spatial import KDTree
 from typing import Tuple
 from warnings import warn
 
-class Grid():
+class Grid:
     
     def __init__(self, x_max, y_max, tile_size, number_of_layers = 3, flip_x = False, flip_y = False):
         """
@@ -140,7 +140,7 @@ class Grid():
         :param other: (data_to_be_addded, at_x, at_y)
         :return:
         """
-        self.__setitem__((other[1], other[2]), other[0], layer=layer)
+        self.__setitem__((other[1], other[2], layer), other[0])
     
     def convert_position_to_pixels(self, row, column):
         """

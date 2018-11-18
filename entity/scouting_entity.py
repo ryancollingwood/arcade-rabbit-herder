@@ -11,7 +11,7 @@ class ScoutingEntity(MovableEntity):
             base_colour: Colour, tick_rate: int = 5,
             is_solid: bool = True, parent_collection: List = None,
             grid_layer: int = 0, entity_type_id: int = 0, movement_type: MovementType = MovementType.PATROL,
-            target = None, target_offset = 0, search_for_entity_types: List[int] = [], search_tile_range = 1
+            target = None, target_offset = 0, search_for_entity_types: List[int] = list(), search_tile_range = 1
     ):
         super().__init__(
             x, y, height, width, base_colour, tick_rate, is_solid, parent_collection, grid_layer, entity_type_id,

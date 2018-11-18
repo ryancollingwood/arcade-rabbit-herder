@@ -4,7 +4,7 @@ from consts import Colour
 from consts import Layer
 from consts import EntityType
 
-class Game():
+class Game:
     def __init__(
             self, width, height, tile_size, width_aspect_ratio: float,
             grid_layers: int = 3, flip_x: bool = False, flip_y: bool = False):
@@ -24,6 +24,7 @@ class Game():
         self.walls = []
         self.score: int = 0
         self.game_message = ""
+        self.debug_message = ""
 
         self.grid = None
         
