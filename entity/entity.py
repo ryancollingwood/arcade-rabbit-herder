@@ -1,4 +1,3 @@
-from enum import Enum
 from warnings import warn
 from consts.colour import Colour
 from consts.direction import MovementDirection, DIRECTION_INVERSE
@@ -6,10 +5,9 @@ from typing import List
 
 
 class Entity:
-    
-    id = 0
-    all = {}
-    grid = None
+    id = 0  # Each entity (and derived instances) has a unique id this is a class variable for keeping track
+    all = {}  # Every entity that is created is added to this class dictionary, entity access if by their unique id
+    grid = None  # Reference to the game grid for entities
     
     def __init__(
             self,
@@ -24,9 +22,11 @@ class Entity:
         
         self.x = x
         self.y = y
+        self.original_x = x
+        self.original_y = y
         self.last_x = None
         self.last_y = None
-
+        
         self.height = height
         self.width = width
         self.half_height = height / 2
@@ -38,7 +38,7 @@ class Entity:
         self.on_collide = None
         self.entity_type_id = entity_type_id
         self.grid_layer = grid_layer
-
+        
         self.top_left = None
         self.top_right = None
         self.middle_left = None
@@ -55,7 +55,7 @@ class Entity:
         
         if parent_collection is not None:
             parent_collection.append(self)
-            
+        
         Entity.all[self.id] = self
     
     def __str__(self):
@@ -69,32 +69,33 @@ class Entity:
             y = self.y,
             colour = self.base_colour
         )
-
+    
     def __repr__(self):
         return self.__str__()
-
+    
     def refresh_dimensions(self):
         """
         For the current x,y pixel location update all other dimension of the entity
         :return: None
         """
-
+        
         if self.x == self.last_x and self.y == self.last_y:
             return
-
-        existing_ids = Entity.grid[(self.x, self.y, self.grid_layer.value)]
+        
+        existing_ids = Entity.grid[(self.x, self.y, self.grid_layer)]
         matches = existing_ids[(existing_ids != 0) & (existing_ids != self.id)]
+        
         if len(matches) > 0:
             for i in matches:
                 other: Entity = Entity.all[i]
                 self.collide(i, 0)
                 if other.grid_layer == self.grid_layer and other.id != self.id:
                     raise Exception("cannot replace!")
-
+                
                 if other.is_solid:
                     self.x = self.last_x
                     self.y = self.last_y
-
+        
         self.top_left = (self.x - self.half_width, self.y - self.half_height)
         self.top_middle = (self.x, self.y - self.half_height)
         self.top_right = (self.x + self.half_width, self.y - self.half_height)
@@ -106,29 +107,29 @@ class Entity:
         self.middle = (self.x, self.y)
         self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
         self.clip_distance = self.width * 0.8
-
+        
         # remove from the grid and re-add to new position
         Entity.grid - self.id
-        Entity.grid[(self.x, self.y, self.grid_layer.value)] = self.id
-
+        Entity.grid[(self.x, self.y, self.grid_layer)] = self.id
+        
         # update our cached x,y
         self.last_x = self.x
         self.last_y = self.y
-
+    
     def set_x(self, x):
         if x > Entity.grid.max_x:
             print(self, x, "is greater than ", Entity.grid.max_x)
         elif x < 0:
             print(self, x, "is less than 0")
         self.x = x
-
+    
     def set_y(self, y):
         if y > Entity.grid.max_y:
             print(self, y, "is greater than ", Entity.grid.max_y)
         elif y < 0:
             print(self, y, "is less than 0")
         self.y = y
-
+    
     # TODO: move this into colllision module
     def collide(self, other_id, distance):
         """
@@ -145,15 +146,15 @@ class Entity:
             if other_id in Entity.all:
                 other_entity = Entity.all[other_id]
                 if other_entity.on_collide is not None:
-                    # TODO: this should be a we read for other_entiy property for how much overlap we allow before we react
+                    # TODO: this should be an other_entiy property for how much overlap we allow before we react
                     if distance < other_entity.half_width:
                         other_entity.on_collide(other_entity, self)
                     # TODO: would there a case for calling our own on collide method?
-                    
+                
                 if other_entity.is_solid:
                     return [other_entity]
         return []
-
+    
     def get_point_for_direction(self, direction: MovementDirection):
         """
         For a direction return the pixel x,y for the entity
@@ -168,10 +169,10 @@ class Entity:
             return self.middle_right
         elif direction == MovementDirection.WEST:
             return self.middle_left
-
+        
         warn(f"Don't know which point to return for direction {direction}")
         return self.middle
-
+    
     def get_point_for_approaching_direction(self, direction: MovementDirection):
         """
         For direction return the opposing directions pixel x,y for the entity
@@ -179,14 +180,14 @@ class Entity:
         :return: Tuple[int,int] - the pixel point for the opposing direction
         """
         return self.get_point_for_direction(DIRECTION_INVERSE[direction])
-
+    
     def get_tick_rate(self):
         """
         What is the entity's tick rate
         :return:
         """
         return self.tick_rate
-
+    
     def can_think(self, frame_count):
         """
         Check if sufficient time has elapsed for this entity to make another decision.
@@ -197,15 +198,15 @@ class Entity:
         if self.last_tick is None:
             self.last_tick = frame_count
             return True
-
+        
         self.last_tick += frame_count
         
         if self.last_tick > self.get_tick_rate():
             self.last_tick = 0
             return True
-
+        
         return False
-
+    
     def think(self, frame_count):
         """
         Make decisions and do things. It's expected you'd override this in classes inheriting from Entity

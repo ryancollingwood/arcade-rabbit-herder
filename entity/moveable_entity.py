@@ -1,23 +1,12 @@
-from enum import Enum
 from warnings import warn
 from random import choice, randint
 from typing import List, Tuple
 
 from consts.colour import Colour
 from consts.direction import MovementDirection, DIRECTION_MAGNITUDES
+from consts.movement_type import MovementType
 from entity import Entity
 from pathfinding import astar
-
-
-class MovementType(Enum):
-    """
-    What 'brain' controls the movement?
-    """
-    NONE = 0  # No movement
-    CONTROLLED = 1  # Movement is from external source i.e. the player
-    PATROL = 2  # Randomly pick a destination around within an area, do this again upon reaching that destination
-    CHASE = 3  # Try to move to a target, which itself may be changing it's position i.e. move to attack player
-    PATH = 4  # Given a target get a path to it
 
 
 class MovableEntity(Entity):
@@ -25,10 +14,10 @@ class MovableEntity(Entity):
     An entity that can move
     """
     width_aspect_ratio = 1
-
+    
     def __init__(self,
                  x: int, y: int, height: int, width: int,
-                 base_colour: Colour, tick_rate: int = 5,
+                 base_colour: Colour, tick_rate: float = 5.0,
                  is_solid: bool = True, parent_collection: List = None,
                  grid_layer: int = 0, entity_type_id: int = 0, movement_type: MovementType = MovementType.PATROL,
                  target = None, target_offset = 0
@@ -36,7 +25,7 @@ class MovableEntity(Entity):
         
         super().__init__(x, y, height, width, base_colour, tick_rate, is_solid,
                          parent_collection, grid_layer, entity_type_id)
-
+        
         self.destination = None
         self.last_destination = None
         self.movement_type = movement_type
@@ -52,7 +41,7 @@ class MovableEntity(Entity):
         self.acceleration_rate = 0.01
         self.path = None
         self.path_step = None
-        
+    
     def think(self, frame_count):
         """
         If we can think then move
@@ -60,7 +49,7 @@ class MovableEntity(Entity):
         """
         if super().think(frame_count):
             self.move()
-
+    
     @staticmethod
     def need_to_move_in_plane(current, lower_bound, middle, upper_bound):
         """
@@ -74,7 +63,7 @@ class MovableEntity(Entity):
         if current in [lower_bound, middle, upper_bound]:
             return False
         return True
-
+    
     def need_to_move_horizontal(self, target_xy):
         """
         Do we need to make changes on the horizontal plane to get to our destination?
@@ -83,14 +72,14 @@ class MovableEntity(Entity):
         move_horizontal, destination_offset_boundary_x = self.is_within_destination_and_offset(
             self.x, target_xy[0]
         )
-
+        
         if move_horizontal:
             move_horizontal = self.need_to_move_in_plane(
                 self.x, destination_offset_boundary_x[0], target_xy[0], destination_offset_boundary_x[1]
             )
-
+        
         return move_horizontal, destination_offset_boundary_x
-
+    
     def need_to_move_vertical(self, target_xy):
         """
         Do we need to make changes on the vertical plane to get to our destination?
@@ -99,34 +88,34 @@ class MovableEntity(Entity):
         move_vertical, destination_offset_boundary_y = self.is_within_destination_and_offset(
             self.y, target_xy[1]
         )
-
+        
         if move_vertical:
             move_vertical = self.need_to_move_in_plane(
                 self.y, destination_offset_boundary_y[0], target_xy[1], destination_offset_boundary_y[1]
             )
-
+        
         return move_vertical, destination_offset_boundary_y
-
+    
     def move(self):
         """
         Determine which direction we should move and conditionally set our destination
         :return:
         """
         result = False
-
+        
         destination = self.get_destination()
         if self.destination != destination:
             self.last_destination = self.destination
             self.destination = destination
-            
+        
         if destination is None:
             return result
-
+        
         move_both = False
-    
+        
         move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(self.destination)
         move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(self.destination)
-
+        
         if move_horizontal and move_vertical:
             move_both = True
             move_horizontal = choice([True, False])
@@ -136,44 +125,52 @@ class MovableEntity(Entity):
             # TODO: raise an event
             self.set_direction(MovementDirection.NONE)
             self.reset_path()
-    
+        
         if move_horizontal:
             result = self.move_in_plane(
                 self.x, self.destination[0], destination_offset_boundary_x, self.move_left, self.move_right
-                )
-
+            )
+            
             if not result and move_both:
                 result = self.move_in_plane(
                     self.y, self.destination[1], destination_offset_boundary_y, self.move_up, self.move_down
-                    )
-
+                )
+            
             return result
         
         elif move_vertical:
             result = self.move_in_plane(
                 self.y, self.destination[1], destination_offset_boundary_y, self.move_up, self.move_down
-                )
+            )
             
             if not result and move_both:
                 result = self.move_in_plane(
                     self.x, self.destination[0], destination_offset_boundary_x, self.move_left, self.move_right
-                    )
-
+                )
+            
             return result
         else:
             
             if self.movement_type == MovementType.PATROL:
-                # TODO: Not use a hardcoded range
-                self.destination = (randint(0, 200), randint(0, 200))
-    
+                # pick a point near our original position modified by our target offset value
+                half_offset = self.target_offset // 2
+                self.destination = (
+                    randint(self.original_x - half_offset, self.original_x + half_offset),
+                    randint(self.original_y - half_offset, self.original_y + half_offset)
+                )
+        
         return False
     
     def get_destination_target(self):
+        """
+        Convert our target (which) is an int to the entity associated to that int.
+        :return:
+        """
         destination_entity = None
-    
+        
         if self.movement_type == MovementType.NONE:
             return destination_entity
-    
+        
         if self.target is not None:
             try:
                 destination_entity: MovableEntity = Entity.all[self.target]
@@ -181,8 +178,9 @@ class MovableEntity(Entity):
                 # this could happen if we were chasing an item that has been
                 # eaten by someone else
                 warn(f"Target {self.target} not found in grid")
+                warn(e)
                 return None
-            
+        
         return destination_entity
     
     def get_destination(self):
@@ -199,17 +197,17 @@ class MovableEntity(Entity):
             :return:
             """
             new_path = self.get_path(final_destination[0], final_destination[1])
-    
+            
             # this is a hack in the case of path-finding timing out
             if new_path is not None and final_destination in new_path:
                 self.reset_path(new_path)
-
+        
         destination = None
         destination_entity = self.get_destination_target()
         
         if destination_entity and self.movement_type in [MovementType.CHASE, MovementType.PATH]:
             destination = destination_entity.grid_pixels
-            
+        
         if self.movement_type == MovementType.PATH:
             # set the target offset to 0 s that we move along points
             # having a target offset may mean we don’t progress to the next point
@@ -226,7 +224,7 @@ class MovableEntity(Entity):
             if destination_entity.is_solid and distance_to_final_final_destination <= Entity.grid.tile_size:
                 self.reset_path()
                 return None
-
+            
             if not self.path:
                 get_path_to_destination()
             
@@ -244,23 +242,23 @@ class MovableEntity(Entity):
                         # if we've reached our destination, then reset the path
                         # TODO raise that we need a new target
                         self.reset_path()
-                    
+            
             if self.path:
                 if self.path_step < len(self.path):
                     # can we progress on the path?
                     destination = self.path[self.path_step]
-
+                    
                     move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(destination)
                     move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(destination)
-
+                    
                     if not move_horizontal and not move_vertical:
                         self.path_step += 1
                         if self.path_step != len(self.path):
                             destination = self.path[self.path_step]
-                        
+                
                 else:
                     get_path_to_destination()
-
+        
         elif self.movement_type == MovementType.CONTROLLED:
             movement_direction = self.movement_direction
             if movement_direction == MovementDirection.NONE:
@@ -268,7 +266,7 @@ class MovableEntity(Entity):
             else:
                 magnitude = DIRECTION_MAGNITUDES[movement_direction]
                 destination = (self.middle[0] + magnitude[0], self.middle[1] + magnitude[1])
-                
+        
         return destination
     
     def reset_path(self, new_path = None):
@@ -282,25 +280,24 @@ class MovableEntity(Entity):
         else:
             self.path = new_path
             self.path_step = 0
-
-        
-    def get_path(self, x ,y):
+    
+    def get_path(self, x, y):
         """
         Get a path to the target x,y - which will be looked up to row, column for A* purposes
         :return:
         """
         end_row, end_column = Entity.grid.get_column_row_for_pixels(x, y)
         start_row, start_column = Entity.grid.get_column_row_for_pixels(self.x, self.y)
-
+        
         # TODO this will fail if any of thses are 0
         if start_row and start_column and end_row and end_column:
             path = astar(Entity.grid.grid_for_pathing(), (start_row, start_column), (end_row, end_column))
-        
+            
             # convert from row,col to pixels
             return [Entity.grid.get_pixel_center(p[0], p[1]) for p in path]
         
         return None
-
+    
     def move_in_plane(self,
                       current: int, destination: int,
                       destination_offset_boundary: Tuple[int, int],
@@ -330,9 +327,9 @@ class MovableEntity(Entity):
                 return False
             elif current + self.target_offset == destination:
                 return False
-                
+        
         return result
-
+    
     def is_within_destination_and_offset(self, current_value, target_value):
         """
         For a plane (x-axis or y-axis) are we within the target and the target +/- the offset
@@ -344,11 +341,11 @@ class MovableEntity(Entity):
         
         if current_value != target_value and (
                 (current_value != destination_bounds[0]) or (current_value != destination_bounds[1])
-                ):
+        ):
             return True, destination_bounds
         
         return False, destination_bounds
-
+    
     def set_direction(self, direction: MovementDirection):
         """
         Set the direction, if we've changed direction reset our acceleration and speed
@@ -360,16 +357,16 @@ class MovableEntity(Entity):
             self.speed = 0
             self.last_movement_direction = direction
             self.update_effective_speed()
-
+        
         self.movement_direction = direction
-
+    
     def update_effective_speed(self):
         """
         Determine our "speed" if below our base speed then increase by 1 pixel until we breach it.
         Otherwise increase our speed based on our acceleration properties.
         :return:
         """
-
+        
         if self.speed < self.base_speed:
             self.speed += 1
         else:
@@ -377,12 +374,12 @@ class MovableEntity(Entity):
                 self.acceleration += self.base_speed * self.acceleration_rate
             else:
                 self.acceleration = 0
-
+            
             if self.acceleration > self.max_acceleration:
                 self.acceleration = self.max_acceleration
-
+            
             self.speed = self.base_speed + self.acceleration
-
+    
     def move_left(self):
         """
         Move left on screen
@@ -391,8 +388,7 @@ class MovableEntity(Entity):
         self.set_direction(MovementDirection.WEST)
         self.update_effective_speed()
         return self.move_in_direction(-1 * self.speed, 0)
-
-
+    
     def move_right(self):
         """
         Move right on screen
@@ -401,7 +397,7 @@ class MovableEntity(Entity):
         self.set_direction(MovementDirection.EAST)
         self.update_effective_speed()
         return self.move_in_direction(self.speed, 0)
-
+    
     def move_up(self):
         """
         Move up on screen
@@ -410,7 +406,7 @@ class MovableEntity(Entity):
         self.set_direction(MovementDirection.NORTH)
         self.update_effective_speed()
         return self.move_in_direction(0, -1 * self.speed)
-
+    
     def move_down(self):
         """
         Move down on screen
@@ -419,7 +415,7 @@ class MovableEntity(Entity):
         self.set_direction(MovementDirection.SOUTH)
         self.update_effective_speed()
         return self.move_in_direction(0, self.speed)
-
+    
     def move_in_direction(self, x_magnitude, y_magnitude):
         """
         If we aren't going to collide with something solid move
@@ -428,7 +424,7 @@ class MovableEntity(Entity):
         :param y_magnitude:
         :return:
         """
-
+        
         def finalise_plane_position(current, destination, magnitude, offset):
             """
             For each of our planes ensure we don't overshoot our destination
@@ -438,25 +434,26 @@ class MovableEntity(Entity):
             :param offset:
             :return:
             """
+            # TODO: Here we can check if we're moving on a path and allow overshooting if overshoot is still on the path
             if magnitude > 0:
                 if current + magnitude > destination + offset:
                     return destination + offset
             elif magnitude < 0:
                 if current + magnitude < destination - offset:
                     return destination - offset
-    
+            
             return current + magnitude
-
+        
         result = False
         new_direction = self.get_direction(x_magnitude, y_magnitude)
-
+        
         if self.movement_type == MovementType.CONTROLLED:
             self.destination = (self.x + x_magnitude, self.y + y_magnitude)
-    
+        
         collide_entities = self.collide_entities(new_direction, x_magnitude, y_magnitude)
         if len(collide_entities) == 0:
             self.set_direction(new_direction)
-
+            
             self.set_x(self.x + x_magnitude)
             self.set_y(self.y + y_magnitude)
             
@@ -469,12 +466,12 @@ class MovableEntity(Entity):
                 if self.destination:
                     self.set_x(finalise_plane_position(self.x, self.destination[0], x_magnitude, self.target_offset))
                     self.set_y(finalise_plane_position(self.y, self.destination[1], y_magnitude, self.target_offset))
-
-            result = True
             
+            result = True
+        
         self.refresh_dimensions()
         return result
-
+    
     def collide_entities(self, direction: MovementDirection, x_magnitude, y_magnitude):
         """
         For a given direction and magnitudes, determine which point we need to check for collisions
@@ -484,9 +481,8 @@ class MovableEntity(Entity):
         :param y_magnitude:
         :return:
         """
-        directions = [self.middle]
         
-        # when more accurate collision dection is implemented additional
+        # when more accurate collision detection is implemented additional
         # points can be used
         if direction == MovementDirection.NORTH:
             directions = [self.top_middle]
@@ -499,26 +495,26 @@ class MovableEntity(Entity):
         else:
             warn(f"Cannot determine point to check collision for direction {direction}")
             return []
-            
+        
         for position in directions:
             start_x = position[0]
             start_y = position[1]
-        
+            
             collision_items = self.check_collision_point(
                 start_x, start_y,
                 direction,
                 x_magnitude, y_magnitude
             )
-        
+            
             if len(collision_items) > 0:
                 return collision_items
-    
+        
         return []
-
-    # todo move this into colllision module
+    
+    # TODO: move this into collision module
     def check_collision_point(self, search_x, search_y,
-                              direction=MovementDirection.NONE,
-                              x_magnitude=0, y_magnitude=0
+                              direction = MovementDirection.NONE,
+                              x_magnitude = 0, y_magnitude = 0
                               ):
         """
         Check for collision with other entities in the grid
@@ -530,13 +526,13 @@ class MovableEntity(Entity):
         :return:
         """
         result = []
-
+        
         # based on our direction which x,y deltas do we need to be looking in?
         magnitudes = DIRECTION_MAGNITUDES[direction]
         collision_items = Entity.grid.query(
             search_x + (magnitudes[0]), search_y + (magnitudes[1]), k = 8, distance_upper_bound = self.width
         )
-
+        
         if collision_items is not None:
             # todo probably a list comprehension here
             for collision_item in collision_items:
@@ -547,39 +543,39 @@ class MovableEntity(Entity):
                         continue
                     if collision_item[0] == self.id:
                         continue
-
+                    
                     collision_entity: Entity = Entity.all[collision_item[0]]
-
+                    
                     if collision_entity.is_solid and direction != MovementDirection.NONE:
                         collision_point = collision_entity.get_point_for_approaching_direction(direction)
-
+                        
                         # clamp but leave 1px difference
                         clamp_x = collision_point[0] - search_x + (DIRECTION_MAGNITUDES[direction][0] * -1)
                         clamp_y = collision_point[1] - search_y + (DIRECTION_MAGNITUDES[direction][1] * -1)
-
+                        
                         # if our clamp distance is greater than our magnitude distance
                         # it means we're close but not yet colliding
                         if direction in [MovementDirection.NORTH, MovementDirection.SOUTH]:
                             if clamp_y != 0 and abs(clamp_y) > abs(y_magnitude):
                                 continue
-
+                            
                             self.set_y(self.y + clamp_y)
                         
                         elif direction in [MovementDirection.EAST, MovementDirection.WEST]:
                             if clamp_x != 0 and abs(clamp_x) > abs(x_magnitude):
                                 continue
-
+                            
                             self.set_x(self.x + clamp_x)
-
+                        
                         # set direction to none and refresh since we've clamped
                         self.destination = (self.x, self.y,)
                         self.set_direction(MovementDirection.NONE)
                         self.refresh_dimensions()
-
+                    
                     return self.collide(collision_item[0], collision_item[1])
-
+        
         return result
-
+    
     def move_to_point(self, destination_x, destination_y):
         """
         For a destination determine the nearest grid center position and set our direction towards it so that
@@ -591,7 +587,7 @@ class MovableEntity(Entity):
         grid_destination = Entity.grid.get_pos_for_pixels(destination_x, destination_y)
         self.destination = (grid_destination[0], grid_destination[1])
         self.set_direction(self.get_relative_direction(grid_destination[0], grid_destination[1]))
-
+    
     def get_relative_direction(self, destination_x, destination_y):
         """
         For an x,y position what is the direction we'd need to travel in to reach the position?
@@ -600,7 +596,7 @@ class MovableEntity(Entity):
         :return:
         """
         return self.get_direction(destination_x - self.x, destination_y - self.y)
-
+    
     @staticmethod
     def get_direction(x_magnitude, y_magnitude):
         """

@@ -4,6 +4,7 @@ from scipy.spatial import KDTree
 from typing import Tuple
 from warnings import warn
 
+
 class Grid:
     
     def __init__(self, x_max, y_max, tile_size, number_of_layers = 3, flip_x = False, flip_y = False):
@@ -174,7 +175,8 @@ class Grid:
         center_x, center_y = self.get_pos_for_pixels(x, y)
         
         # find the intersection of the x and y values in our grid returns and array of array of array of bool
-        match = (self.map_pixel_center_positions[:, : , 1] == center_x) & (self.map_pixel_center_positions[:, : , 0] == center_y)
+        match = (self.map_pixel_center_positions[:, :, 1] == center_x) & \
+                (self.map_pixel_center_positions[:, :, 0] == center_y)
         
         # be we need the indexes
         result_index = np.where(match)
@@ -235,7 +237,9 @@ class Grid:
         query_result = self.query_tree(x, y, k = k, distance_upper_bound = distance_upper_bound)
 
         if k == 1:
-            # pass
+            # if only searching for one neighbour, then lets convert to a tuple of two
+            # numpy arrays as "d has shape tuple if k is one, or tuple+(k,) if k is larger than one"
+            # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.KDTree.query.html
             query_result = (np.array([query_result[0]]), np.array([query_result[1]]),)
 
         if query_result:
