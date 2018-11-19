@@ -40,7 +40,7 @@ class MyGame(arcade.Window):
         arcade.set_background_color(arcade.color.BLACK)
         
         self.game = None
-        
+        self.last_level = None
         # If you have sprite lists, you should create them here,
         # and set them to None
         self.shape_walls = None
@@ -52,12 +52,8 @@ class MyGame(arcade.Window):
         """
         # Create your sprites and sprite lists here
         self.game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 1, grid_layers = 4)
-        
-        self.shape_walls = arcade.ShapeElementList()
-        
+
         self.game.game_message = "Lead the Rabbit home"
-        
-        self.create_wall_shape()
     
     def create_wall_shape(self):
         """
@@ -134,11 +130,14 @@ class MyGame(arcade.Window):
         arcade.start_render()
         
         game = self.game
-        
+
         if not game.is_running:
             return
         
         # Call draw() on all your sprite lists below
+
+        # have the walls changed?
+
         self.shape_walls.draw()
         
         if game.game_message != "":
@@ -214,24 +213,24 @@ class MyGame(arcade.Window):
         Normally, you'll call update() on the sprite lists that
         need it.
         """
+
         # Call draw() on all your sprite lists below
         game = self.game
-        if not game.is_running:
+
+        # if level has changed redraw walls
+        if self.game.level != self.last_level:
+            if self.shape_walls is None:
+                self.shape_walls = arcade.ShapeElementList()
+            else:
+                for shape in self.shape_walls:
+                    self.shape_walls.remove(shape)
+
+            self.create_wall_shape()
+            self.last_level = self.game.level
+
+        if not game.update_game(delta_time):
             return
-        
-        items = game.items.copy()
-        for item in items:
-            item.think(delta_time)
-        
-        del items
-        
-        npcs = game.npcs.copy()
-        for npc in npcs:
-            npc.think(delta_time)
-        del npcs
-        
-        game.player.think(delta_time)
-    
+
     def on_key_press(self, key, modifiers):
         """
         Called whenever a key on the keyboard is pressed.

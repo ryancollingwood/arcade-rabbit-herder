@@ -1,3 +1,4 @@
+from threading import Timer
 from grid import Grid
 from entity import MovableEntity, Entity, ScoutingEntity
 from consts.movement_type import MovementType
@@ -22,6 +23,7 @@ class Game:
         :param flip_y: Do we want to flip the position of y pixels, default 0 is the top increasing towards the bottom
         """
         self.is_running: bool = False
+        self.level = 1
         self.width: int = width
         self.height: int = height
         self.tile_size: float = tile_size
@@ -34,6 +36,7 @@ class Game:
         self.npcs = []
         self.items = []
         self.walls = []
+        self.timers = {}
         self.score: int = 0
         self.game_message = ""
         self.debug_message = ""
@@ -55,6 +58,9 @@ class Game:
         self.npcs = []
         self.items = []
         self.walls = []
+        for timer in self.timers:
+            self.timers[timer].cancel()
+        self.timers = {}
         self.score = 0
         self.game_message = ""
         self.debug_message = ""
@@ -65,15 +71,34 @@ class Game:
         
         self.grid = Grid(x_max, y_max, self.tile_size, self.grid_layers, self.flip_x, self.flip_y)
         Entity.grid = self.grid
-    
+
+    def update_game(self, delta_time):
+        if not self.is_running:
+            return False
+
+        items = self.items.copy()
+        for item in items:
+            item.think(delta_time)
+
+        del items
+
+        npcs = self.npcs.copy()
+        for npc in npcs:
+            npc.think(delta_time)
+        del npcs
+
+        self.player.think(delta_time)
+
+        return True
+
     def load_level(self):
         """
         Load the level
         :return:
         """
         self.reset_game()
-        
-        with open('level.txt') as f:
+
+        with open(f"level_{self.level:02}.txt") as f:
             wall_lines = f.readlines()
         
         for row_index, row_value in enumerate(wall_lines):
@@ -260,7 +285,15 @@ class Game:
         if other.id != self.rabbit.id:
             return
         self.game_message = "YOU WIN! Press R to restart"
-        print(self.game_message)
+
+        if "change_level" not in self.timers:
+            self.timers["change_level"] = Timer(2.0, self.change_level)
+            self.timers["change_level"].start()
+
+    def change_level(self):
+        self.timers["change_level"].cancel()
+        self.level += 1
+        self.load_level()
     
     def start_rabbit(self):
         """
