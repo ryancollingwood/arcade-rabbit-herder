@@ -61,6 +61,11 @@ class MyGame(arcade.Window):
         rather than a call for each wall block
         :return:
         """
+        self.shape_walls = arcade.ShapeElementList()
+        self.shape_walls.center_x = 0
+        self.shape_walls.center_y = 0
+        self.shape_walls.angle = 0
+
         point_list = []
         color_list = []
         
@@ -125,19 +130,18 @@ class MyGame(arcade.Window):
         """
         Render the screen.
         """
+        game = self.game
+        
+        if not game.is_running:
+            return
+
         # This command should happen before we start drawing. It will clear
         # the screen to the background color, and erase what we drew last frame.
         arcade.start_render()
         
-        game = self.game
-
-        if not game.is_running:
-            return
-        
         # Call draw() on all your sprite lists below
 
         # have the walls changed?
-
         self.shape_walls.draw()
         
         if game.game_message != "":
@@ -216,15 +220,15 @@ class MyGame(arcade.Window):
 
         # Call draw() on all your sprite lists below
         game = self.game
+        
+        if not game.is_running:
+            return
 
         # if level has changed redraw walls
         if self.game.level != self.last_level:
-            if self.shape_walls is None:
-                self.shape_walls = arcade.ShapeElementList()
-            else:
-                for shape in self.shape_walls:
-                    self.shape_walls.remove(shape)
-
+            if self.shape_walls is not None:
+                del self.shape_walls
+                
             self.create_wall_shape()
             self.last_level = self.game.level
 
@@ -381,3 +385,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

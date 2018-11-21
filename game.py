@@ -292,6 +292,7 @@ class Game:
 
     def change_level(self):
         self.timers["change_level"].cancel()
+        self.is_running = False
         self.level += 1
         self.load_level()
     
