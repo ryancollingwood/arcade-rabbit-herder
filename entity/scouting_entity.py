@@ -11,7 +11,7 @@ class ScoutingEntity(MovableEntity):
             base_colour: Colour, tick_rate: float = 5,
             is_solid: bool = True, parent_collection: List = None,
             grid_layer: int = 0, entity_type_id: int = 0, movement_type: MovementType = MovementType.PATROL,
-            target = None, target_offset = 0, search_for_entity_types: List[int] = list(), search_tile_range = 1
+            target = None, target_offset = 0, search_for_entity_types: List[int] = None, search_tile_range = 1
     ):
         super().__init__(
             x, y, height, width, base_colour, tick_rate, is_solid, parent_collection, grid_layer, entity_type_id,
@@ -29,37 +29,53 @@ class ScoutingEntity(MovableEntity):
         self.search_for_entity_types = value
     
     def get_destination_target(self):
+        """
+        If we have a path check and ends in grid position of an entity of interest.
+        If not then see if there are any entities of interest in a tile radius around us.
+        If is then return the first as our target.
+
+        Need to handle the case of multiple candidates.
+        Currently doesn't have a notion of line of sight.
+        :return:
+        """
         # first check if we have a path, does it end in a entity of interest
         
-        def get_nearby_interesting(results):
-            return [x[0] for x in results if x[0] > 0 and Entity.all[
-                int(x[0])].entity_type_id in self.search_for_entity_types]
+        def get_nearby_interesting(results, search_for_entity_types):
+
+            if not search_for_entity_types:
+                return list()
+
+            return [
+                x[0] for x in results if
+                x[0] > 0 and Entity.all[int(x[0])].entity_type_id in search_for_entity_types
+            ]
         
         if self.path:
             last_step = self.path[-1]
             last_step_match = Entity.grid.query(last_step[0], last_step[1], k = 1)
-            last_step_nearby_match = get_nearby_interesting(last_step_match)
+            last_step_nearby_match = get_nearby_interesting(last_step_match, self.search_for_entity_types)
             if len(last_step_nearby_match) > 0:
                 self.target = int(last_step_nearby_match[0])
                 return Entity.all[last_step_nearby_match[0]]
         
         # look for things of interest that are in range
         nearby = Entity.grid.query(self.x, self.y, k = 16, distance_upper_bound = self.search_distance)
-        nearby_interesting = get_nearby_interesting(nearby)
+        nearby_interesting = get_nearby_interesting(nearby, self.search_for_entity_types)
         
         self.movement_type = self.original_movement_type
         self.target_offset = self.original_target_offset
-        
-        # if we can get a path to any of them, then that's our destination
-        # TBD: for now just get the first
+
+        # TODO: if we can get a path to any of them, then that's our destination for now just get the first
         if len(nearby_interesting) > 0 and self.target == self.original_target:
             self.movement_type = MovementType.PATH
             self.target_offset = 0
             self.target = int(nearby_interesting[0])
             return Entity.all[nearby_interesting[0]]
         else:
-            if len(nearby_interesting) == 0:
+            if len(nearby_interesting) == 0 and self.movement_type != self.original_movement_type:
                 self.target = self.original_target
+                self.movement_type = self.original_movement_type
+                self.reset_path()
         
         # if no destination then use super().get_destination
         return super().get_destination_target()

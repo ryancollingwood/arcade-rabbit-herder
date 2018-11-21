@@ -155,12 +155,15 @@ class MyGame(arcade.Window):
                 anchor_x = "center",
                 anchor_y = "top",
             )
-        
-        scores = "Score: {a} - Herder Speed: {b:.2f} - Rabbit Speed: {c:.2f}".format(
-            a = game.score,
-            b = game.player.speed,
-            c = game.rabbit.speed,
-        )
+
+        try:
+            scores = "Score: {a} - Herder Speed: {b:.2f} - Rabbit Speed: {c:.2f}".format(
+                a = game.score,
+                b = game.player.speed,
+                c = game.rabbit.speed,
+            )
+        except AttributeError:
+            pass
         
         arcade.draw_text(
             scores,
