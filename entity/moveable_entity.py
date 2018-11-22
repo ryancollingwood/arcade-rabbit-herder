@@ -104,6 +104,7 @@ class MovableEntity(Entity):
         result = False
         
         destination = self.get_destination()
+        
         if self.destination != destination:
             self.last_destination = self.destination
             self.destination = destination
@@ -124,7 +125,8 @@ class MovableEntity(Entity):
             # we've probably arrived at our destination
             # TODO: raise an event
             self.set_direction(MovementDirection.NONE)
-            self.reset_path()
+            if self.path:
+                self.reset_path()
         
         if move_horizontal:
             result = self.move_in_plane(
@@ -135,6 +137,8 @@ class MovableEntity(Entity):
                 result = self.move_in_plane(
                     self.y, self.destination[1], destination_offset_boundary_y, self.move_up, self.move_down
                 )
+
+            self.check_find_path(result)
             
             return result
         
@@ -147,7 +151,9 @@ class MovableEntity(Entity):
                 result = self.move_in_plane(
                     self.x, self.destination[0], destination_offset_boundary_x, self.move_left, self.move_right
                 )
-            
+
+            self.check_find_path(result)
+
             return result
         else:
             
@@ -160,7 +166,20 @@ class MovableEntity(Entity):
                 )
         
         return False
-    
+
+    def check_find_path(self, result):
+        if self.movement_type == MovementType.CHASE:
+            destination_entity = Entity.all[self.target]
+
+            # check again as scouting entities will change movement type when something of interest is near
+            if self.movement_type == MovementType.CHASE:
+                if not result:
+                    if not self.path or destination_entity.grid_pixels not in self.path:
+                        self.reset_path(self.get_path(destination_entity.grid_pixels[0], destination_entity.grid_pixels[1]))
+                else:
+                    if self.path and self.destination == destination_entity.grid_pixels:
+                        self.reset_path()
+
     def get_destination_target(self):
         """
         Convert our target (which) is an int to the entity associated to that int.
@@ -243,23 +262,26 @@ class MovableEntity(Entity):
                         # TODO raise that we need a new target
                         self.reset_path()
             
-            if self.path:
-                if self.path_step < len(self.path):
-                    # can we progress on the path?
-                    destination = self.path[self.path_step]
-                    
-                    move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(destination)
-                    move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(destination)
-                    
-                    if not move_horizontal and not move_vertical:
-                        self.path_step += 1
-                        if self.path_step != len(self.path):
-                            destination = self.path[self.path_step]
+        if self.path:
+            
+            if self.path_step < len(self.path):
+                # can we progress on the path?
+                destination = self.path[self.path_step]
                 
-                else:
-                    get_path_to_destination()
+                move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(destination)
+                move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(destination)
+                
+                if not move_horizontal and not move_vertical:
+                    self.path_step += 1
+                    if self.path_step != len(self.path):
+                        destination = self.path[self.path_step]
+            
+            elif self.movement_type == MovementType.PATH:
+                get_path_to_destination()
+            else:
+                self.reset_path()
         
-        elif self.movement_type == MovementType.CONTROLLED:
+        if self.movement_type == MovementType.CONTROLLED:
             movement_direction = self.movement_direction
             if movement_direction == MovementDirection.NONE:
                 destination = None

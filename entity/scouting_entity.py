@@ -72,10 +72,15 @@ class ScoutingEntity(MovableEntity):
             self.target = int(nearby_interesting[0])
             return Entity.all[nearby_interesting[0]]
         else:
-            if len(nearby_interesting) == 0 and self.movement_type != self.original_movement_type:
+            if len(nearby_interesting) == 0:
                 self.target = self.original_target
                 self.movement_type = self.original_movement_type
-                self.reset_path()
+                if self.path:
+                    # given we've already not found anything interesting call the super version
+                    destination_entity = super().get_destination_target()
+                    if destination_entity.grid_pixels not in self.path:
+                        self.reset_path()
+                    return destination_entity
         
         # if no destination then use super().get_destination
         return super().get_destination_target()
