@@ -68,14 +68,12 @@ class ScoutingEntity(MovableEntity):
         # TODO: if we can get a path to any of them, then that's our destination for now just get the first
         if len(nearby_interesting) > 0 and self.target == self.original_target:
             self.movement_type = MovementType.PATH
-            self.target_offset = 0
             self.target = int(nearby_interesting[0])
             return Entity.all[nearby_interesting[0]]
         else:
             if len(nearby_interesting) == 0:
                 self.target = self.original_target
-                self.movement_type = self.original_movement_type
-                if self.path:
+                if self.movement_type != self.original_movement_type and self.path:
                     # given we've already not found anything interesting call the super version
                     destination_entity = super().get_destination_target()
                     if destination_entity.grid_pixels not in self.path:

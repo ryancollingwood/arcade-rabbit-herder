@@ -104,8 +104,7 @@ class MovableEntity(Entity):
         
         move_both = False
 
-        destination_offset_boundary_x = self.get_destination_bounds(self.destination[0])
-        destination_offset_boundary_y = self.get_destination_bounds(self.destination[1])
+        destination_offset_boundary_x, destination_offset_boundary_y = self.get_destination_bounds()
         
         move_horizontal = self.need_to_move_horizontal(self.destination, destination_offset_boundary_x)
         move_vertical = self.need_to_move_vertical(self.destination, destination_offset_boundary_y)
@@ -131,7 +130,7 @@ class MovableEntity(Entity):
                     self.y, self.destination[1], destination_offset_boundary_y, self.move_up, self.move_down
                 )
 
-            self.check_find_path(result)
+            self.find_chasing_path(result)
             
             return result
         
@@ -145,7 +144,7 @@ class MovableEntity(Entity):
                     self.x, self.destination[0], destination_offset_boundary_x, self.move_left, self.move_right
                 )
 
-            self.check_find_path(result)
+            self.find_chasing_path(result)
 
             return result
         else:
@@ -160,18 +159,36 @@ class MovableEntity(Entity):
         
         return False
 
-    def check_find_path(self, result):
+    def find_chasing_path(self, result):
+        """
+        As a chasing entity are we able to move towards our target? If not then use path finding to stop us from getting
+        stuck
+        :param result:
+        :return:
+        """
         if self.movement_type == MovementType.CHASE:
             destination_entity = Entity.all[self.target]
 
-            # check again as scouting entities will change movement type when something of interest is near
-            if self.movement_type == MovementType.CHASE:
-                if not result:
-                    if not self.path or destination_entity.grid_pixels not in self.path:
-                        self.reset_path(self.get_path(destination_entity.grid_pixels[0], destination_entity.grid_pixels[1]))
-                else:
-                    if self.path and self.destination == destination_entity.grid_pixels:
-                        self.reset_path()
+            if not result:
+                if not self.path or destination_entity.grid_pixels not in self.path:
+                    path_to_target = self.get_path(destination_entity.grid_pixels[0], destination_entity.grid_pixels[1])
+                    if destination_entity.grid_pixels in path_to_target:
+                        self.reset_path(path_to_target)
+                    else:
+                        # warn("couldn’t get back on track")
+                        if self.is_try_to_follow_find_path():
+                            self.reset_path(path_to_target)
+            else:
+                if self.path and self.destination == destination_entity.grid_pixels:
+                    self.reset_path()
+                        
+    def is_try_to_follow_find_path(self):
+        """
+        If we chasing and then get a path that doesn't lead to our target do we follow it?
+        Expected to be overridden in child classes
+        :return:
+        """
+        return choice([True, False])
 
     def get_destination_target(self):
         """
@@ -203,7 +220,7 @@ class MovableEntity(Entity):
         
         def get_path_to_destination():
             """
-            This is a temporary hack, to compensate for pathfinding timing out without finding the final_destination
+            This is a hack, to compensate for pathfinding timing out without finding the final_destination
             IF we get a path without the destination then DONT reset as we might be able to get close enough by
             following our existing path
             :return:
@@ -213,6 +230,9 @@ class MovableEntity(Entity):
             # this is a hack in the case of path-finding timing out
             if new_path is not None and final_destination in new_path:
                 self.reset_path(new_path)
+            else:
+                # exisiting path if any if preserved
+                pass
         
         destination = None
         destination_entity = self.get_destination_target()
@@ -223,7 +243,6 @@ class MovableEntity(Entity):
         if self.movement_type == MovementType.PATH:
             # set the target offset to 0 s that we move along points
             # having a target offset may mean we don’t progress to the next point
-            self.target_offset = 0
             
             # TODO: incorporate offset into final_destination calculation
             final_destination = destination_entity.grid_pixels
@@ -358,24 +377,39 @@ class MovableEntity(Entity):
         For a plane (x-axis or y-axis) are we within the target and the target +/- the offset
         :param current_value:
         :param target_value:
-        :param destination_bounds: Optional will be calculated by a call to get_destination_bounds if not supplied
+        :param destination_bounds: Optional will be calculated by a call to get_plane_bounds if not supplied
         :return: bool are we within the boundary, tuple of the boundary
         """
         if destination_bounds is None:
-            destination_bounds = self.get_destination_bounds(target_value)
+            destination_bounds = self.get_plane_bounds(target_value)
             
         if self.need_to_move_in_plane(current_value, destination_bounds[0], target_value, destination_bounds[1]):
             return True, destination_bounds
             
         return False, destination_bounds
 
-    def get_destination_bounds(self, plane_target_value):
+    def get_plane_bounds(self, plane_target_value, plane_offset = None):
         """
         :param plane_target_value: the value in the x or y plane we're targetting
         :return:
         """
-        destination_bounds = (plane_target_value - self.target_offset, plane_target_value + self.target_offset)
+        if plane_offset is None:
+            plane_offset = self.target_offset
+            
+        destination_bounds = (plane_target_value - plane_offset, plane_target_value + plane_offset)
         return destination_bounds
+    
+    def get_destination_bounds(self):
+        """
+        Helper method to get the x,y bounds for our current destination
+        :return: x_bounds, y_bounds
+        """
+        plane_offset = self.get_target_offset()
+        
+        x_bounds = self.get_plane_bounds(self.destination[0], plane_offset)
+        y_bounds = self.get_plane_bounds(self.destination[1], plane_offset)
+        
+        return x_bounds, y_bounds
 
     def set_direction(self, direction: MovementDirection):
         """
@@ -495,13 +529,27 @@ class MovableEntity(Entity):
                 self.set_y(self.y + y_magnitude)
             else:
                 if self.destination:
-                    self.set_x(finalise_plane_position(self.x, self.destination[0], x_magnitude, self.target_offset))
-                    self.set_y(finalise_plane_position(self.y, self.destination[1], y_magnitude, self.target_offset))
+                    
+                    offset = self.get_target_offset()
+                    
+                    self.set_x(finalise_plane_position(self.x, self.destination[0], x_magnitude, offset))
+                    self.set_y(finalise_plane_position(self.y, self.destination[1], y_magnitude, offset))
             
             result = True
         
         self.refresh_dimensions()
         return result
+
+    def get_target_offset(self):
+        """
+        Get the target offset for moving towards our destination. If we have a path with our destination in it, then
+        we ignore self.target_offset and return 0
+        :return:
+        """
+        if self.path and self.destination in self.path:
+            return 0
+        
+        return self.target_offset
     
     def collide_entities(self, direction: MovementDirection, x_magnitude, y_magnitude):
         """
