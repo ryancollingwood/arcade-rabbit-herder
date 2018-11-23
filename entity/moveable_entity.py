@@ -64,37 +64,27 @@ class MovableEntity(Entity):
             return False
         return True
     
-    def need_to_move_horizontal(self, target_xy):
+    def need_to_move_horizontal(self, target_xy, destination_bounds_x = None):
         """
         Do we need to make changes on the horizontal plane to get to our destination?
         :return:
         """
-        move_horizontal, destination_offset_boundary_x = self.is_within_destination_and_offset(
-            self.x, target_xy[0]
+        move_horizontal, destination_bounds_x = self.is_within_destination_and_offset(
+            self.x, target_xy[0], destination_bounds_x
         )
         
-        if move_horizontal:
-            move_horizontal = self.need_to_move_in_plane(
-                self.x, destination_offset_boundary_x[0], target_xy[0], destination_offset_boundary_x[1]
-            )
-        
-        return move_horizontal, destination_offset_boundary_x
+        return move_horizontal
     
-    def need_to_move_vertical(self, target_xy):
+    def need_to_move_vertical(self, target_xy, destination_bounds_y = None):
         """
         Do we need to make changes on the vertical plane to get to our destination?
         :return:
         """
-        move_vertical, destination_offset_boundary_y = self.is_within_destination_and_offset(
-            self.y, target_xy[1]
+        move_vertical, destination_bounds_y = self.is_within_destination_and_offset(
+            self.y, target_xy[1], destination_bounds_y
         )
         
-        if move_vertical:
-            move_vertical = self.need_to_move_in_plane(
-                self.y, destination_offset_boundary_y[0], target_xy[1], destination_offset_boundary_y[1]
-            )
-        
-        return move_vertical, destination_offset_boundary_y
+        return move_vertical
     
     def move(self):
         """
@@ -113,9 +103,12 @@ class MovableEntity(Entity):
             return result
         
         move_both = False
+
+        destination_offset_boundary_x = self.get_destination_bounds(self.destination[0])
+        destination_offset_boundary_y = self.get_destination_bounds(self.destination[1])
         
-        move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(self.destination)
-        move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(self.destination)
+        move_horizontal = self.need_to_move_horizontal(self.destination, destination_offset_boundary_x)
+        move_vertical = self.need_to_move_vertical(self.destination, destination_offset_boundary_y)
         
         if move_horizontal and move_vertical:
             move_both = True
@@ -262,14 +255,22 @@ class MovableEntity(Entity):
                         # TODO raise that we need a new target
                         self.reset_path()
             
+        if self.path and self.movement_type != MovementType.PATH:
+            # if we have a path, but our movement type is not to explicitly follow the path
+            # then check we are in range then stop the path
+            # if you evaluate this for `self.movement_type == MovementType.PATH`
+            # then it will always reset as the current target is the next step in the path
+            if not self.need_to_move_horizontal(destination_entity.grid_pixels) and \
+                    not self.need_to_move_vertical(destination_entity.grid_pixels):
+                self.reset_path()
+
         if self.path:
-            
             if self.path_step < len(self.path):
                 # can we progress on the path?
                 destination = self.path[self.path_step]
                 
-                move_horizontal, destination_offset_boundary_x = self.need_to_move_horizontal(destination)
-                move_vertical, destination_offset_boundary_y = self.need_to_move_vertical(destination)
+                move_horizontal = self.need_to_move_horizontal(destination, [destination[0], destination[0]])
+                move_vertical = self.need_to_move_vertical(destination, [destination[1], destination[1]])
                 
                 if not move_horizontal and not move_vertical:
                     self.path_step += 1
@@ -352,22 +353,30 @@ class MovableEntity(Entity):
         
         return result
     
-    def is_within_destination_and_offset(self, current_value, target_value):
+    def is_within_destination_and_offset(self, current_value, target_value, destination_bounds = None):
         """
         For a plane (x-axis or y-axis) are we within the target and the target +/- the offset
         :param current_value:
         :param target_value:
+        :param destination_bounds: Optional will be calculated by a call to get_destination_bounds if not supplied
         :return: bool are we within the boundary, tuple of the boundary
         """
-        destination_bounds = (target_value - self.target_offset, target_value + self.target_offset)
-        
-        if current_value != target_value and (
-                (current_value != destination_bounds[0]) or (current_value != destination_bounds[1])
-        ):
+        if destination_bounds is None:
+            destination_bounds = self.get_destination_bounds(target_value)
+            
+        if self.need_to_move_in_plane(current_value, destination_bounds[0], target_value, destination_bounds[1]):
             return True, destination_bounds
-        
+            
         return False, destination_bounds
-    
+
+    def get_destination_bounds(self, plane_target_value):
+        """
+        :param plane_target_value: the value in the x or y plane we're targetting
+        :return:
+        """
+        destination_bounds = (plane_target_value - self.target_offset, plane_target_value + self.target_offset)
+        return destination_bounds
+
     def set_direction(self, direction: MovementDirection):
         """
         Set the direction, if we've changed direction reset our acceleration and speed
