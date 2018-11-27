@@ -10,6 +10,9 @@ class ButtonList:
     
     def __len__(self):
         return len(self.items)
+
+    def __getitem__(self, item):
+        return self.items[item]
         
     def add_button(self, button: Button):
         self.items.append(button)

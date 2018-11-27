@@ -36,6 +36,7 @@ COLOUR_MAP = {
 class MyGame(arcade.Window):
     
     def __init__(self, width, height):
+        self.debug = False
         super().__init__(width, height)
         self.set_update_rate(1 / 20)
         
@@ -254,60 +255,73 @@ class MyGame(arcade.Window):
         
         player = self.game.player
         rabbit = self.game.rabbit
-        
-        if key == arcade.key.LEFT:
-            player.set_direction(MovementDirection.WEST)
-        elif key == arcade.key.RIGHT:
-            player.set_direction(MovementDirection.EAST)
-        elif key == arcade.key.UP:
-            player.set_direction(MovementDirection.NORTH)
-        elif key == arcade.key.DOWN:
-            player.set_direction(MovementDirection.SOUTH)
-        # debug stuffs
-        elif key == arcade.key.PERIOD:
-            player.tick_rate -= 1
-        elif key == arcade.key.COMMA:
-            player.tick_rate += 1
-        elif key == arcade.key.R:
-            self.game.load_level()
-        elif key == arcade.key.W:
-            rabbit.movement_type = MovementType.NONE
-            rabbit.target = None
-            rabbit.move_up()
-        elif key == arcade.key.A:
-            rabbit.movement_type = MovementType.NONE
-            rabbit.target = None
-            rabbit.move_left()
-        elif key == arcade.key.D:
-            rabbit.movement_type = MovementType.NONE
-            rabbit.target = None
-            rabbit.move_right()
-        elif key == arcade.key.S:
-            rabbit.movement_type = MovementType.NONE
-            rabbit.target = None
-            rabbit.move_down()
-        elif key == arcade.key.X:
-            self.game.start_rabbit()
+
+        if not self.game.menu.is_visible:
+            if key == arcade.key.LEFT:
+                player.set_direction(MovementDirection.WEST)
+            elif key == arcade.key.RIGHT:
+                player.set_direction(MovementDirection.EAST)
+            elif key == arcade.key.UP:
+                player.set_direction(MovementDirection.NORTH)
+            elif key == arcade.key.DOWN:
+                player.set_direction(MovementDirection.SOUTH)
+            elif key == arcade.key.R:
+                self.game.load_level()
+
+        if self.debug:
+            # debug stuffs
+            if key == arcade.key.PERIOD:
+                player.tick_rate -= 1
+            elif key == arcade.key.COMMA:
+                player.tick_rate += 1
+            elif key == arcade.key.W:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_up()
+            elif key == arcade.key.A:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_left()
+            elif key == arcade.key.D:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_right()
+            elif key == arcade.key.S:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_down()
+            elif key == arcade.key.X:
+                self.game.start_rabbit()
     
     def on_key_release(self, key, modifiers):
         """
         Called whenever the user lets off a previously pressed key.
         """
         player: MovableEntity = self.game.player
-        
-        if key == arcade.key.LEFT:
-            if player.movement_direction == MovementDirection.WEST:
-                player.set_direction(MovementDirection.NONE)
-        elif key == arcade.key.RIGHT:
-            if player.movement_direction == MovementDirection.EAST:
-                player.set_direction(MovementDirection.NONE)
-        elif key == arcade.key.UP:
-            if player.movement_direction == MovementDirection.NORTH:
-                player.set_direction(MovementDirection.NONE)
-        elif key == arcade.key.DOWN:
-            if player.movement_direction == MovementDirection.SOUTH:
-                player.set_direction(MovementDirection.NONE)
-        elif key == arcade.key.ESCAPE:
+        menu: Menu = self.game.menu
+
+        if not self.game.menu.is_visible:
+            if key == arcade.key.LEFT:
+                if player.movement_direction == MovementDirection.WEST:
+                    player.set_direction(MovementDirection.NONE)
+            elif key == arcade.key.RIGHT:
+                if player.movement_direction == MovementDirection.EAST:
+                    player.set_direction(MovementDirection.NONE)
+            elif key == arcade.key.UP:
+                if player.movement_direction == MovementDirection.NORTH:
+                    player.set_direction(MovementDirection.NONE)
+            elif key == arcade.key.DOWN:
+                if player.movement_direction == MovementDirection.SOUTH:
+                    player.set_direction(MovementDirection.NONE)
+        else:
+            if key == arcade.key.UP:
+                menu.decrement_selected()
+            elif key == arcade.key.DOWN:
+                menu.increment_selected()
+            elif key == arcade.key.ENTER:
+                menu.click_selected()
+
+        if key == arcade.key.ESCAPE:
             self.game.menu.is_visible = not self.game.menu.is_visible
             
     def get_menu(self):
@@ -351,8 +365,12 @@ class MyGame(arcade.Window):
 
             text_height = text_height - (menu.button_padding * 3)
         
-        for button in menu.button_list:
-            self.draw_button(button, menu_cords[0][0], menu_cords[0][1], menu.width, menu.height)
+        for button_index, button in enumerate(menu.button_list):
+            self.draw_button(
+                button, menu_cords[0][0], menu_cords[0][1],
+                menu.width, menu.height,
+                menu.selected_index == button_index
+            )
 
     def get_menu_coords(self, menu):
         menu_center_x = (self.width // 2)
@@ -366,14 +384,27 @@ class MyGame(arcade.Window):
         )
         return menu_center_x, menu_center_y, menu_cords
 
-    def draw_button(self, button, relative_x, relative_y, menu_width, menu_height):
+    def draw_button(self, button, relative_x, relative_y, menu_width, menu_height, is_selected):
         # adapted from http://arcade.academy/examples/gui_text_button.html#gui-text-button
-
         screen_button_center_x = (SCREEN_WIDTH - button.center_x - relative_x)
         screen_button_center_y = menu_height + (SCREEN_HEIGHT - button.center_y - relative_y)
 
-        arcade.draw_rectangle_filled(screen_button_center_x, screen_button_center_y, button.width,
-                                     button.height, COLOUR_MAP[button.face_color])
+        arcade.draw_rectangle_filled(
+            screen_button_center_x, screen_button_center_y,
+            button.width, button.height,
+            COLOUR_MAP[button.face_color]
+        )
+
+        if is_selected:
+            selected_x = screen_button_center_x - (button.width // 2) - 25
+            selector_height = 10
+            selector_width = 16
+            arcade.draw_triangle_filled(
+                selected_x, screen_button_center_y - selector_height,
+                selected_x, screen_button_center_y + selector_height,
+                selected_x + selector_width, screen_button_center_y,
+                COLOUR_MAP[Colour.YELLOW.value]
+            )
 
         if not button.pressed:
             color = COLOUR_MAP[button.shadow_color]

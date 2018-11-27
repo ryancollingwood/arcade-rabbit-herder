@@ -31,6 +31,7 @@ class Menu:
         
         if add_close_button:
             self.add_close_button()
+            self.selected_index = 0
 
     def add_close_button(self):
         button_text = "Back"
@@ -58,7 +59,7 @@ class Menu:
         button_width = self.button_width
         button_padding = self.button_padding
 
-        start_y = len(self.text_lines) * ( self.font_size_px + button_padding)
+        start_y = len(self.text_lines) * (self.font_size_px + button_padding)
         current_button_y = len(self.button_list) * (button_height + button_padding)
         
         start_y += current_button_y
@@ -84,3 +85,31 @@ class Menu:
     def close_menu(self, button):
         if self.can_close():
             self.is_visible = False
+
+    def decrement_selected(self):
+        if len(self.button_list) == 0:
+            self.selected_index = -1
+            return
+
+        if self.selected_index == 0:
+            self.selected_index = len(self.button_list) - 1
+        else:
+            self.selected_index -= 1
+
+    def increment_selected(self):
+        if len(self.button_list) == 0:
+            self.selected_index = -1
+            return
+
+        if self.selected_index == len(self.button_list) -1:
+            self.selected_index = 0
+        else:
+            self.selected_index += 1
+
+    def click_selected(self):
+        if self.selected_index == -1:
+            return
+
+        button = self.button_list[self.selected_index]
+        if button.on_release:
+            button.on_release(None)

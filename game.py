@@ -323,7 +323,7 @@ class Game:
         """
         if other.id != self.rabbit.id:
             return
-        self.game_message = "YOU WIN! Press R to restart"
+        self.game_message = "Next Level!"
 
         if "change_level" not in self.timers:
             self.timers["change_level"] = Timer(2.0, self.change_level)
