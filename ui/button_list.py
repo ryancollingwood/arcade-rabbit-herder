@@ -7,6 +7,9 @@ class ButtonList:
         
     def __iter__(self):
         return iter(self.items)
+    
+    def __len__(self):
+        return len(self.items)
         
     def add_button(self, button: Button):
         self.items.append(button)

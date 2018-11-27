@@ -336,7 +336,7 @@ class MyGame(arcade.Window):
             COLOUR_MAP[menu.base_colour]
         )
         
-        text_height = menu.height - (menu.button_padding * 3)
+        text_height = menu_cords[0][1] - (menu.button_padding * 3)
 
         for text in menu.text_lines:
             arcade.draw_text(
@@ -370,8 +370,7 @@ class MyGame(arcade.Window):
     def draw_button(self, button, relative_x, relative_y):
         # adapted from http://arcade.academy/examples/gui_text_button.html#gui-text-button
         screen_button_center_x = button.center_x + relative_x
-        screen_button_center_y = button.center_y - (relative_y // 2)
-
+        screen_button_center_y = relative_y - (SCREEN_HEIGHT - button.center_y)
         
         arcade.draw_rectangle_filled(screen_button_center_x, screen_button_center_y, button.width,
                                      button.height, COLOUR_MAP[button.face_color])
@@ -443,6 +442,7 @@ class MyGame(arcade.Window):
             if menu:
                 menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
                 menu_top = SCREEN_HEIGHT - menu_cords[0][1]
+                
                 # TODO: this calculation is flaky
                 menu_click_x = x - (menu_cords[0][0])
                 menu_click_y = screen_y - (menu_top // 2)

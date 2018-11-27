@@ -1,8 +1,9 @@
+import sys
 from typing import List
 from threading import Timer
 from grid import Grid
 from entity import MovableEntity, Entity, ScoutingEntity
-from ui import Menu
+from ui import Menu, Button
 from consts.movement_type import MovementType
 from consts import Colour
 from consts import Layer
@@ -94,6 +95,11 @@ class Game:
             width = self.width - 200,
             height = self.height - 200
         )
+
+        self.menu.add_button("Quit", None, self.quit)
+        
+    def quit(self, button):
+        sys.exit(0)
 
     def update_game(self, delta_time):
         if not self.is_running:
