@@ -3,6 +3,7 @@ import arcade
 
 from game import Game
 from entity import Entity
+from ui import Menu
 from consts.movement_type import MovementType
 from consts.colour import Colour
 from entity import MovableEntity
@@ -28,6 +29,7 @@ COLOUR_MAP = {
     Colour.TAN.value: arcade.color.TAN,
     Colour.WHITE.value: arcade.color.WHITE,
     Colour.YELLOW.value: arcade.color.YELLOW,
+    Colour.LIGHT_GREY.value: arcade.color.LIGHT_GRAY,
 }
 
 
@@ -198,6 +200,8 @@ class MyGame(arcade.Window):
         # Finish the render.
         # Nothing will be drawn without this.
         # Must happen after all draw commands
+
+        self.draw_menu()
     
     def draw_path(self, path):
         """
@@ -303,7 +307,116 @@ class MyGame(arcade.Window):
         elif key == arcade.key.DOWN:
             if player.movement_direction == MovementDirection.SOUTH:
                 player.set_direction(MovementDirection.NONE)
-    
+        # debug
+        elif key == arcade.key.M:
+            self.game.menu.is_visible = not self.game.menu.is_visible
+            
+    def get_menu(self):
+        game = self.game
+        if not game.menu:
+            return
+
+        menu = game.menu
+        if not menu.is_visible:
+            return None
+        
+        return menu
+        
+    def draw_menu(self):
+        
+        menu = self.get_menu()
+        if not menu:
+            return
+
+        menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
+        
+        arcade.draw_rectangle_filled(
+            menu_center_x, menu_center_y,
+            menu.width, menu.height,
+            COLOUR_MAP[menu.base_colour]
+        )
+        
+        text_height = menu.height - (menu.button_padding * 3)
+
+        for text in menu.text_lines:
+            arcade.draw_text(
+                text,
+                menu_center_x,
+                text_height,
+                arcade.color.BLACK,
+                12,
+                align = "center",
+                anchor_x = "center",
+                anchor_y = "top",
+            )
+
+            text_height = text_height - (menu.button_padding * 3)
+        
+        for button in menu.button_list:
+            self.draw_button(button, menu_cords[0][0], menu_cords[0][1])
+
+    def get_menu_coords(self, menu):
+        menu_center_x = (self.width // 2)
+        menu_center_y = (self.height // 2)
+        # get a mapping of the menu co-ordinates for relative positioning of things inside the menu
+        menu_cords = (
+            (menu_center_x - (menu.width // 2), menu_center_y + (menu.height // 2)),
+            (menu_center_x + (menu.width // 2), menu_center_y + (menu.height // 2)),
+            (menu_center_x - (menu.width // 2), menu_center_y - (menu.height // 2)),
+            (menu_center_x + (menu.width // 2), menu_center_y - (menu.height // 2)),
+        )
+        return menu_center_x, menu_center_y, menu_cords
+
+    def draw_button(self, button, relative_x, relative_y):
+        # adapted from http://arcade.academy/examples/gui_text_button.html#gui-text-button
+        screen_button_center_x = button.center_x + relative_x
+        screen_button_center_y = button.center_y - (relative_y // 2)
+
+        
+        arcade.draw_rectangle_filled(screen_button_center_x, screen_button_center_y, button.width,
+                                     button.height, COLOUR_MAP[button.face_color])
+
+        if not button.pressed:
+            color = COLOUR_MAP[button.shadow_color]
+        else:
+            color = COLOUR_MAP[button.highlight_color]
+
+        # Bottom horizontal
+        arcade.draw_line(screen_button_center_x - button.width / 2, screen_button_center_y - button.height / 2,
+                         screen_button_center_x + button.width / 2, screen_button_center_y - button.height / 2,
+                         color, button.button_height)
+
+        # Right vertical
+        arcade.draw_line(screen_button_center_x + button.width / 2, screen_button_center_y - button.height / 2,
+                         screen_button_center_x + button.width / 2, screen_button_center_y + button.height / 2,
+                         color, button.button_height)
+
+        if not button.pressed:
+            color = COLOUR_MAP[button.highlight_color]
+        else:
+            color = COLOUR_MAP[button.shadow_color]
+
+        # Top horizontal
+        arcade.draw_line(screen_button_center_x - button.width / 2, screen_button_center_y + button.height / 2,
+                         screen_button_center_x + button.width / 2, screen_button_center_y + button.height / 2,
+                         color, button.button_height)
+
+        # Left vertical
+        arcade.draw_line(screen_button_center_x - button.width / 2, screen_button_center_y - button.height / 2,
+                         screen_button_center_x - button.width / 2, screen_button_center_y + button.height / 2,
+                         color, button.button_height)
+
+        x = screen_button_center_x
+        y = screen_button_center_y
+        if not button.pressed:
+            x -= button.button_height
+            y += button.button_height
+
+        arcade.draw_text(button.text, x, y,
+                         arcade.color.BLACK, font_size=button.font_size,
+                         width=button.width, align="center",
+                         anchor_x="center", anchor_y="center")
+        
     def on_mouse_motion(self, x, y, delta_x, delta_y):
         """
         Called whenever the mouse moves.
@@ -314,17 +427,49 @@ class MyGame(arcade.Window):
         """
         Called when the user presses a mouse button.
         """
-        pass
+        menu: Menu = self.get_menu()
+        screen_size = self.get_size()
+        
+        print(screen_size)
+        
+        original_x = x
+        original_y = y
+        
+        screen_y = SCREEN_HEIGHT - y - 40 # 40 px taskbar
+        
+        print("original_x", original_x, "original_y", original_y)
+        
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            if menu:
+                menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
+                menu_top = SCREEN_HEIGHT - menu_cords[0][1]
+                # TODO: this calculation is flaky
+                menu_click_x = x - (menu_cords[0][0])
+                menu_click_y = screen_y - (menu_top // 2)
+                
+                menu.button_list.check_mouse_press_for_buttons(
+                    menu_click_x,
+                    menu_click_y
+                )
+
     
     def on_mouse_release(self, x, y, button, modifiers):
         """
         Called when a user releases a mouse button.
         """
         grid_y = SCREEN_HEIGHT - y
-        
+
+        menu: Menu = self.get_menu()
+
         if button == arcade.MOUSE_BUTTON_LEFT:
+            if menu:
+                menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
+                menu.button_list.check_mouse_release_for_buttons(x - menu_cords[0][0], y - menu_cords[0][1])
+            
             self.game.debug_x_y(x, grid_y)
             # self.game.player.move_to_point(x, grid_y)
+            
+            
     
     # from here below are inherited methods in which we are just calling the super class's method
     def _create(self):

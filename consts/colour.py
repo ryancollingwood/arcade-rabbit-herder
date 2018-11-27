@@ -18,3 +18,4 @@ class Colour(Enum):
     PURPLE = 13
     PINK = 14
     TAN = 15
+    LIGHT_GREY = 16

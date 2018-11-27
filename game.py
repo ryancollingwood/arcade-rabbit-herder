@@ -1,6 +1,8 @@
+from typing import List
 from threading import Timer
 from grid import Grid
 from entity import MovableEntity, Entity, ScoutingEntity
+from ui import Menu
 from consts.movement_type import MovementType
 from consts import Colour
 from consts import Layer
@@ -33,17 +35,19 @@ class Game:
         
         self.player: MovableEntity = None
         self.rabbit: MovableEntity = None
-        self.npcs = []
-        self.items = []
-        self.walls = []
+        self.npcs: List[MovableEntity] = []
+        self.items: List[Entity] = []
+        self.walls: List[Entity] = []
         self.timers = {}
         self.score: int = 0
-        self.game_message = ""
-        self.debug_message = ""
+        self.game_message: str = ""
+        self.debug_message: str = ""
         
-        self.grid = None
+        self.grid: Grid = None
         
         MovableEntity.width_aspect_ratio = width_aspect_ratio
+        
+        self.menu: Menu = None
         
         self.load_level()
     
@@ -71,9 +75,31 @@ class Game:
         
         self.grid = Grid(x_max, y_max, self.tile_size, self.grid_layers, self.flip_x, self.flip_y)
         Entity.grid = self.grid
+        
+        self.menu = Menu(
+            text_lines = [
+                "You are the white block and you must herd the green ",
+                "block (the rabbit) to the grey block in the maze.",
+                "",
+                "The rabbit will try to keep a fixed distance away ",
+                "from you, so you'll have to strategically position ",
+                "yourself to herd the rabbit where you want it to go!",
+                "",
+                "Rabbits love carrots (orange blocks) and will run ",
+                "towards them when they are in range. The blue blocks ",
+                "will make both yourself and the rabbit move faster, ",
+                "similarly the red block will slow down movement."
+            ],
+            is_modal = True,
+            width = self.width - 200,
+            height = self.height - 200
+        )
 
     def update_game(self, delta_time):
         if not self.is_running:
+            return False
+        
+        if self.menu and self.menu.is_visible and self.menu.is_modal:
             return False
 
         items = self.items.copy()
