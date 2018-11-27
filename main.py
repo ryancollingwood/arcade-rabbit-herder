@@ -54,9 +54,12 @@ class MyGame(arcade.Window):
         :return:
         """
         # Create your sprites and sprite lists here
-        self.game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 1, grid_layers = 4)
-
+        self.game: Game = Game(SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, 1, grid_layers = 4)
         self.game.game_message = "Lead the Rabbit home"
+
+        # show the menu so that we see the instructions
+        self.game.menu.button_list[0].text = "Start"
+        self.game.menu.is_visible = True
     
     def create_wall_shape(self):
         """
@@ -322,6 +325,8 @@ class MyGame(arcade.Window):
                 menu.click_selected()
 
         if key == arcade.key.ESCAPE:
+            # reseting the back button text to override the start
+            self.game.menu.button_list[0].text = "Back"
             self.game.menu.is_visible = not self.game.menu.is_visible
             
     def get_menu(self):
