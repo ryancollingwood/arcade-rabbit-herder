@@ -2,6 +2,8 @@ from .button import Button
 
 
 class ButtonList:
+    
+    # expose `items` for list like operations
     def __init__(self):
         self.items = list()
         
@@ -15,10 +17,21 @@ class ButtonList:
         return self.items[item]
         
     def add_button(self, button: Button):
+        """
+        Add a button to the button list
+        :param button:
+        :return:
+        """
         self.items.append(button)
 
     def check_mouse_press_for_buttons(self, x, y):
-        """ Given an x, y, see if we need to register any button clicks. """
+        """
+        Given an x, y, see if we need to register any button clicks.
+        :param x:
+        :param y:
+        :return:
+        """
+        
         for button in self.items:
             if button.check_click(x, y):
                 button.on_press(button)
@@ -26,9 +39,16 @@ class ButtonList:
                 break
 
     def check_mouse_release_for_buttons(self, x, y):
-        """ If a mouse button has been released, see if we need to process
-            any release events. """
+        """
+        If a mouse button has been released, see if we need to process any release events.
+        :param x:
+        :param y:
+        :return:
+        """
+        
         for button in self.items:
             if button.pressed:
-                button.on_release(button)
+                # if it's pressed check we're still on the button
+                if button.check_click(x, y):
+                    button.on_release(button)
 

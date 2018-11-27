@@ -299,7 +299,11 @@ class MyGame(arcade.Window):
     def on_key_release(self, key, modifiers):
         """
         Called whenever the user lets off a previously pressed key.
+        :param key:
+        :param modifiers:
+        :return:
         """
+        
         player: MovableEntity = self.game.player
         menu: Menu = self.game.menu
 
@@ -318,18 +322,23 @@ class MyGame(arcade.Window):
                     player.set_direction(MovementDirection.NONE)
         else:
             if key == arcade.key.UP:
-                menu.decrement_selected()
+                menu.decrement_selected_button()
             elif key == arcade.key.DOWN:
-                menu.increment_selected()
+                menu.increment_selected_button()
             elif key == arcade.key.ENTER:
-                menu.click_selected()
+                menu.click_selected_button()
 
         if key == arcade.key.ESCAPE:
-            # reseting the back button text to override the start
+            # resetting the back button text to override the value set at the start
             self.game.menu.button_list[0].text = "Back"
             self.game.menu.is_visible = not self.game.menu.is_visible
             
-    def get_menu(self):
+    def get_menu_for_display(self):
+        """
+        Get the current menu (if any) for display
+        :return:
+        """
+        
         game = self.game
         if not game.menu:
             return
@@ -341,8 +350,12 @@ class MyGame(arcade.Window):
         return menu
         
     def draw_menu(self):
+        """
+        If the menu should be visible, then draw it
+        :return:
+        """
         
-        menu = self.get_menu()
+        menu = self.get_menu_for_display()
         if not menu:
             return
 
@@ -378,6 +391,12 @@ class MyGame(arcade.Window):
             )
 
     def get_menu_coords(self, menu):
+        """
+        Get the pixel positions for positioning a menu in the center of the screen
+        :param menu:
+        :return:
+        """
+        
         menu_center_x = (self.width // 2)
         menu_center_y = (self.height // 2)
         # get a mapping of the menu co-ordinates for relative positioning of things inside the menu
@@ -390,6 +409,17 @@ class MyGame(arcade.Window):
         return menu_center_x, menu_center_y, menu_cords
 
     def draw_button(self, button, relative_x, relative_y, menu_width, menu_height, is_selected):
+        """
+        Draw a square for the button. If button is selected display an indicator (e.g. yellow triangle) next to it
+        :param button:
+        :param relative_x:
+        :param relative_y:
+        :param menu_width:
+        :param menu_height:
+        :param is_selected:
+        :return:
+        """
+        
         # adapted from http://arcade.academy/examples/gui_text_button.html#gui-text-button
         screen_button_center_x = (SCREEN_WIDTH - button.center_x - relative_x)
         screen_button_center_y = menu_height + (SCREEN_HEIGHT - button.center_y - relative_y)
@@ -456,13 +486,15 @@ class MyGame(arcade.Window):
         """
         Called whenever the mouse moves.
         """
+        
         pass
     
     def on_mouse_press(self, x, y, button, modifiers):
         """
         Called when the user presses a mouse button.
         """
-        menu: Menu = self.get_menu()
+        
+        menu: Menu = self.get_menu_for_display()
 
         menu_click_x, menu_click_y = self.get_menu_click(menu, x, y)
 
@@ -474,6 +506,15 @@ class MyGame(arcade.Window):
                 )
 
     def get_menu_click(self, menu, x, y):
+        """
+        Translate to the arcade screen pixel position to co-ordinate values relative to the menu.
+        Used for determining if a button has been clicked.
+        :param menu:
+        :param x:
+        :param y:
+        :return:
+        """
+        
         menu_click_x = None
         menu_click_y = None
 
@@ -489,8 +530,14 @@ class MyGame(arcade.Window):
     def on_mouse_release(self, x, y, button, modifiers):
         """
         Called when a user releases a mouse button.
+        :param x:
+        :param y:
+        :param button:
+        :param modifiers:
+        :return:
         """
-        menu: Menu = self.get_menu()
+        
+        menu: Menu = self.get_menu_for_display()
 
         menu_click_x, menu_click_y = self.get_menu_click(menu, x, y)
 
