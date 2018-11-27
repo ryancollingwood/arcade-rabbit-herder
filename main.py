@@ -200,12 +200,13 @@ class MyGame(arcade.Window):
         
         if game.rabbit.path:
             self.draw_path(game.rabbit.path)
+
+        # draw menus last so they appear on top of things
+        self.draw_menu()
         
         # Finish the render.
         # Nothing will be drawn without this.
         # Must happen after all draw commands
-
-        self.draw_menu()
     
     def draw_path(self, path):
         """
@@ -426,6 +427,7 @@ class MyGame(arcade.Window):
 
         arcade.draw_rectangle_filled(
             screen_button_center_x, screen_button_center_y,
+
             button.width, button.height,
             COLOUR_MAP[button.face_color]
         )
@@ -520,10 +522,16 @@ class MyGame(arcade.Window):
 
         if menu:
             menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
-
-            # TODO: transform the values for out of bounds values
+            
             menu_click_x = menu.width - (SCREEN_WIDTH - x - menu_cords[0][0])
             menu_click_y = menu.height + (SCREEN_HEIGHT - y - menu_cords[0][1])
+
+            # Transform the values for out of bounds values
+            if menu_click_x > menu.width or menu_click_x < 0:
+                menu_click_x = None
+
+            if menu_click_y > menu.height or menu_click_y < 0:
+                menu_click_y = None
 
         return menu_click_x, menu_click_y
 

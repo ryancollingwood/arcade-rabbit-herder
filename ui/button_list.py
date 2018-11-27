@@ -32,6 +32,12 @@ class ButtonList:
         :return:
         """
         
+        if not x:
+            return
+        
+        if not y:
+            return
+        
         for button in self.items:
             if button.check_click(x, y):
                 button.on_press(button)
@@ -51,4 +57,3 @@ class ButtonList:
                 # if it's pressed check we're still on the button
                 if button.check_click(x, y):
                     button.on_release(button)
-
