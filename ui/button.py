@@ -40,3 +40,16 @@ class Button:
         self.pressed = False
         if self._on_release:
             self._on_release(button)
+
+    def check_click(self, x, y):
+        if x > self.center_x + self.width / 2:
+            return False
+        if x < self.center_x - self.width / 2:
+            return False
+        if y > self.center_y + self.height / 2:
+            return False
+        if y < self.center_y - self.height / 2:
+            return False
+
+        return True
+

@@ -49,9 +49,33 @@ class Game:
         MovableEntity.width_aspect_ratio = width_aspect_ratio
         
         self.menu: Menu = None
-        
+        self.setup_menu()
+
         self.load_level()
-    
+
+    def setup_menu(self):
+        self.menu = Menu(
+            text_lines = [
+                "You are the white block and you must herd the green ",
+                "block (the rabbit) to the grey block in the maze.",
+                "",
+                "The rabbit will try to keep a fixed distance away ",
+                "from you, so you'll have to strategically position ",
+                "yourself to herd the rabbit where you want it to go!",
+                "",
+                "Rabbits love carrots (orange blocks) and will run ",
+                "towards them when they are in range. The blue blocks ",
+                "will make both yourself and the rabbit move faster, ",
+                "similarly the red block will slow down movement."
+            ],
+            is_modal = True,
+            width = self.width - 200,
+            height = self.height - 200
+        )
+
+        self.menu.add_button("Restart", None, self.menu_reset_game)
+        self.menu.add_button("Quit", None, self.quit)
+
     def reset_game(self):
         """
         Restart the game and reset the game level
@@ -76,28 +100,11 @@ class Game:
         
         self.grid = Grid(x_max, y_max, self.tile_size, self.grid_layers, self.flip_x, self.flip_y)
         Entity.grid = self.grid
-        
-        self.menu = Menu(
-            text_lines = [
-                "You are the white block and you must herd the green ",
-                "block (the rabbit) to the grey block in the maze.",
-                "",
-                "The rabbit will try to keep a fixed distance away ",
-                "from you, so you'll have to strategically position ",
-                "yourself to herd the rabbit where you want it to go!",
-                "",
-                "Rabbits love carrots (orange blocks) and will run ",
-                "towards them when they are in range. The blue blocks ",
-                "will make both yourself and the rabbit move faster, ",
-                "similarly the red block will slow down movement."
-            ],
-            is_modal = True,
-            width = self.width - 200,
-            height = self.height - 200
-        )
 
-        self.menu.add_button("Quit", None, self.quit)
-        
+    def menu_reset_game(self, button):
+        self.menu.close_menu(button)
+        self.load_level()
+
     def quit(self, button):
         sys.exit(0)
 

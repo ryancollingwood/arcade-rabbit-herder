@@ -307,8 +307,7 @@ class MyGame(arcade.Window):
         elif key == arcade.key.DOWN:
             if player.movement_direction == MovementDirection.SOUTH:
                 player.set_direction(MovementDirection.NONE)
-        # debug
-        elif key == arcade.key.M:
+        elif key == arcade.key.ESCAPE:
             self.game.menu.is_visible = not self.game.menu.is_visible
             
     def get_menu(self):
@@ -353,7 +352,7 @@ class MyGame(arcade.Window):
             text_height = text_height - (menu.button_padding * 3)
         
         for button in menu.button_list:
-            self.draw_button(button, menu_cords[0][0], menu_cords[0][1])
+            self.draw_button(button, menu_cords[0][0], menu_cords[0][1], menu.width, menu.height)
 
     def get_menu_coords(self, menu):
         menu_center_x = (self.width // 2)
@@ -367,11 +366,12 @@ class MyGame(arcade.Window):
         )
         return menu_center_x, menu_center_y, menu_cords
 
-    def draw_button(self, button, relative_x, relative_y):
+    def draw_button(self, button, relative_x, relative_y, menu_width, menu_height):
         # adapted from http://arcade.academy/examples/gui_text_button.html#gui-text-button
-        screen_button_center_x = button.center_x + relative_x
-        screen_button_center_y = relative_y - (SCREEN_HEIGHT - button.center_y)
-        
+
+        screen_button_center_x = (SCREEN_WIDTH - button.center_x - relative_x)
+        screen_button_center_y = menu_height + (SCREEN_HEIGHT - button.center_y - relative_y)
+
         arcade.draw_rectangle_filled(screen_button_center_x, screen_button_center_y, button.width,
                                      button.height, COLOUR_MAP[button.face_color])
 
@@ -427,49 +427,43 @@ class MyGame(arcade.Window):
         Called when the user presses a mouse button.
         """
         menu: Menu = self.get_menu()
-        screen_size = self.get_size()
-        
-        print(screen_size)
-        
-        original_x = x
-        original_y = y
-        
-        screen_y = SCREEN_HEIGHT - y - 40 # 40 px taskbar
-        
-        print("original_x", original_x, "original_y", original_y)
-        
+
+        menu_click_x, menu_click_y = self.get_menu_click(menu, x, y)
+
         if button == arcade.MOUSE_BUTTON_LEFT:
             if menu:
-                menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
-                menu_top = SCREEN_HEIGHT - menu_cords[0][1]
-                
-                # TODO: this calculation is flaky
-                menu_click_x = x - (menu_cords[0][0])
-                menu_click_y = screen_y - (menu_top // 2)
-                
                 menu.button_list.check_mouse_press_for_buttons(
                     menu_click_x,
-                    menu_click_y
+                    menu_click_y,
                 )
 
-    
+    def get_menu_click(self, menu, x, y):
+        menu_click_x = None
+        menu_click_y = None
+
+        if menu:
+            menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
+
+            # TODO: transform the values for out of bounds values
+            menu_click_x = menu.width - (SCREEN_WIDTH - x - menu_cords[0][0])
+            menu_click_y = menu.height + (SCREEN_HEIGHT - y - menu_cords[0][1])
+
+        return menu_click_x, menu_click_y
+
     def on_mouse_release(self, x, y, button, modifiers):
         """
         Called when a user releases a mouse button.
         """
-        grid_y = SCREEN_HEIGHT - y
-
         menu: Menu = self.get_menu()
+
+        menu_click_x, menu_click_y = self.get_menu_click(menu, x, y)
 
         if button == arcade.MOUSE_BUTTON_LEFT:
             if menu:
-                menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
-                menu.button_list.check_mouse_release_for_buttons(x - menu_cords[0][0], y - menu_cords[0][1])
-            
-            self.game.debug_x_y(x, grid_y)
-            # self.game.player.move_to_point(x, grid_y)
-            
-            
+                menu.button_list.check_mouse_release_for_buttons(
+                    menu_click_x,
+                    menu_click_y,
+                )
     
     # from here below are inherited methods in which we are just calling the super class's method
     def _create(self):

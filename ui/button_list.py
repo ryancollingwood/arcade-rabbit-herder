@@ -17,15 +17,10 @@ class ButtonList:
     def check_mouse_press_for_buttons(self, x, y):
         """ Given an x, y, see if we need to register any button clicks. """
         for button in self.items:
-            if x > button.center_x + button.width / 2:
-                continue
-            if x < button.center_x - button.width / 2:
-                continue
-            if y > button.center_y + button.height / 2:
-                continue
-            if y < button.center_y - button.height / 2:
-                continue
-            button.on_press(button)
+            if button.check_click(x, y):
+                button.on_press(button)
+                # this assumes only one button can be clicked for an x,y
+                break
 
     def check_mouse_release_for_buttons(self, x, y):
         """ If a mouse button has been released, see if we need to process
