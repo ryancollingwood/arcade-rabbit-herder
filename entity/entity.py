@@ -98,8 +98,10 @@ class Entity:
                     raise Exception("cannot replace!")
                 
                 if other.is_solid:
-                    self.x = self.last_x
-                    self.y = self.last_y
+                    if self.last_x:
+                        self.x = self.last_x
+                    if self.last_y:
+                        self.y = self.last_y
         
         self.top_left = (self.x - self.half_width, self.y - self.half_height)
         self.top_middle = (self.x, self.y - self.half_height)

@@ -369,6 +369,8 @@ class MyGame(arcade.Window):
             elif key == arcade.key.DOWN:
                 if player.movement_direction == MovementDirection.SOUTH:
                     player.set_direction(MovementDirection.NONE)
+            elif key == arcade.key.C:
+                self.game.player_drop_carrot()
         else:
             if key == arcade.key.UP:
                 menu.decrement_selected_button()

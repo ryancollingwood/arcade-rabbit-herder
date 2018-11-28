@@ -284,13 +284,20 @@ class Game:
         :return:
         """
         x, y = self.grid.get_pixel_center(row, column)
+        self.place_carrot(x, y)
+
+    def place_carrot(self, x, y):
         item = Entity(
             x, y, int(self.tile_size - 2), int(self.tile_size - 2), Colour.ORANGE, 5, False, self.items,
             grid_layer = Layer.ITEMS.value, entity_type_id = EntityType.CARROT.value
         )
         item.on_collide = self.eat_carrot
         item.load_shape_sprite("carrot", 3)
-    
+
+    def player_drop_carrot(self):
+        x, y = self.player.grid_pixels
+        self.place_carrot(x, y)
+
     def eat_carrot(self, carrot, eater):
         """
         If `eater` is our rabbit, then remove carrot from the game map and increase the score
