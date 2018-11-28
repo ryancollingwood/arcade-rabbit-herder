@@ -16,9 +16,9 @@ class Button:
             on_release: Callable[[object], None],
             font_size: int = 18,
             font_face: str = "Arial",
-            face_color: Colour = Colour.LIGHT_GREY,
+            face_color: Colour = Colour.GREY,
             highlight_color: Colour = Colour.WHITE,
-            shadow_color: Colour = Colour.GREY,
+            shadow_color: Colour = Colour.GREY_DARK,
             button_height: int = 2
     ):
         """

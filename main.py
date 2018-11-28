@@ -1,8 +1,10 @@
 # Library imports
+from typing import List
 import arcade
 
 from game import Game
 from entity import Entity
+from shape_sprite import ShapeSprite
 from ui import Menu
 from consts.movement_type import MovementType
 from consts.colour import Colour
@@ -15,23 +17,25 @@ TILE_SIZE = 25
 
 COLOUR_MAP = {
     Colour.BLACK.value: arcade.color.BLACK,
-    Colour.BROWN.value: arcade.color.BROWN,
-    Colour.DARK_BLUE.value: arcade.color.DARK_BLUE,
-    Colour.DARK_GREY.value: arcade.color.DARK_GRAY,
+    Colour.BLUE.value: arcade.color.BLUE,
     Colour.GREEN.value: arcade.color.GREEN,
-    Colour.GREY.value: arcade.color.GRAY,
-    Colour.LIGHT_BLUE.value: arcade.color.BABY_BLUE_EYES,
-    Colour.LIGHT_GREEN.value: arcade.color.LIGHT_GREEN,
-    Colour.MAROON.value: arcade.color.MAROON,
-    Colour.ORANGE.value: arcade.color.ORANGE,
-    Colour.PURPLE.value: arcade.color.PURPLE,
+    Colour.CYAN.value: arcade.color.CYAN,
     Colour.RED.value: arcade.color.RED,
-    Colour.TAN.value: arcade.color.TAN,
-    Colour.WHITE.value: arcade.color.WHITE,
+    Colour.PURPLE.value: arcade.color.PURPLE,
+    Colour.ORANGE.value: arcade.color.ORANGE,
+    Colour.GREY.value: arcade.color.GRAY,
+    Colour.GREY_DARK.value: arcade.color.DARK_GRAY,
+    Colour.BLUE_LIGHT.value: arcade.color.LIGHT_BLUE,
+    Colour.GREEN_LIGHT.value: arcade.color.LIGHT_GREEN,
+    Colour.CYAN_LIGHT.value: arcade.color.LIGHT_CYAN,
+    Colour.RED_LIGHT.value: arcade.color.LIGHT_RED_OCHRE,
+    Colour.PURPLE_LIGHT.value: arcade.color.LIGHT_PASTEL_PURPLE,
     Colour.YELLOW.value: arcade.color.YELLOW,
-    Colour.LIGHT_GREY.value: arcade.color.LIGHT_GRAY,
+    Colour.WHITE.value: arcade.color.WHITE,
+    Colour.BROWN.value: arcade.color.BROWN,
 }
 
+print(COLOUR_MAP)
 
 class MyGame(arcade.Window):
     
@@ -47,6 +51,7 @@ class MyGame(arcade.Window):
         # If you have sprite lists, you should create them here,
         # and set them to None
         self.shape_walls = None
+        self.entities_shapelist = dict()
     
     def setup(self):
         """
@@ -60,6 +65,23 @@ class MyGame(arcade.Window):
         # show the menu so that we see the instructions
         self.game.menu.button_list[0].text = "Start"
         self.game.menu.is_visible = True
+        
+    def reset_level(self):
+        """
+        
+        :return:
+        """
+        if self.shape_walls is not None:
+            del self.shape_walls
+        
+        if self.entities_shapelist is not None:
+            del self.entities_shapelist
+        
+        self.entities_shapelist = dict()
+        
+        self.game.load_level()
+
+        self.create_wall_shape()
     
     def create_wall_shape(self):
         """
@@ -110,6 +132,31 @@ class MyGame(arcade.Window):
         bottom_right[1] = SCREEN_HEIGHT - bottom_right[1]
         return top_left, top_right, bottom_right, bottom_left
     
+    def update_shape_sprite(self, entity: Entity):
+        """
+        Create/Update the sprite shape for an entity and add/update the entry for it in `self.entities_shapelist`
+        :param entity:
+        :return:
+        """
+        
+        shape_sprite: ShapeSprite = entity.shape_sprite
+        
+        if entity.id not in self.entities_shapelist:
+            entity_shapelist = arcade.ShapeElementList()
+            
+            # we need to convert from general colours to arcade specific colours
+            entity_shapelist.append(arcade.create_rectangles_filled_with_colors(
+                shape_sprite.point_list, [COLOUR_MAP[x] for x in shape_sprite.color_list])
+            )
+        else:
+            entity_shapelist = self.entities_shapelist[entity.id]
+
+        entity_shapelist.center_x = shape_sprite.position_x
+        entity_shapelist.center_y = SCREEN_HEIGHT - shape_sprite.position_y
+        entity_shapelist.draw()
+        
+        self.entities_shapelist[entity.id] = entity_shapelist
+    
     def draw_entity(self, entity: Entity):
         """
         Draw the entity as a block, converting the y pixels values for 0,0 being bottom left not top left
@@ -118,9 +165,7 @@ class MyGame(arcade.Window):
         """
         
         if entity.shape_sprite:
-            entity.shape_sprite.update(entity.x, SCREEN_HEIGHT - entity.y)
-            entity.shape_sprite.draw()
-            return
+            return self.update_shape_sprite(entity)
         
         left = (entity.x - entity.half_width)
         right = (entity.x + entity.half_width)
@@ -244,10 +289,7 @@ class MyGame(arcade.Window):
 
         # if level has changed redraw walls
         if self.game.level != self.last_level:
-            if self.shape_walls is not None:
-                del self.shape_walls
-                
-            self.create_wall_shape()
+            self.reset_level()
             self.last_level = self.game.level
 
         if not game.update_game(delta_time):
@@ -276,7 +318,7 @@ class MyGame(arcade.Window):
             elif key == arcade.key.DOWN:
                 player.set_direction(MovementDirection.SOUTH)
             elif key == arcade.key.R:
-                self.game.load_level()
+                self.reset_level()
 
         if self.debug:
             # debug stuffs

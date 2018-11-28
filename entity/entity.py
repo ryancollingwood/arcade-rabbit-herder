@@ -76,14 +76,16 @@ class Entity:
     def __repr__(self):
         return self.__str__()
     
-    def refresh_dimensions(self):
+    def refresh_dimensions(self, force_refresh: bool = False):
         """
         For the current x,y pixel location update all other dimension of the entity
+        :param force_refresh: ignore cached values and recalc
         :return: None
         """
         
-        if self.x == self.last_x and self.y == self.last_y:
-            return
+        if not force_refresh:
+            if self.x == self.last_x and self.y == self.last_y:
+                return
         
         existing_ids = Entity.grid[(self.x, self.y, self.grid_layer)]
         matches = existing_ids[(existing_ids != 0) & (existing_ids != self.id)]
@@ -135,6 +137,10 @@ class Entity:
         elif y < 0:
             print(self, y, "is less than 0")
         self.y = y
+        
+    def load_shape_sprite(self, name, square_size):
+        self.shape_sprite = ShapeSprite(name, self.x, self.y, square_size)
+        self.refresh_dimensions(force_refresh = True)
     
     # TODO: move this into colllision module
     def collide(self, other_id, distance):

@@ -57,17 +57,15 @@ class Game:
     def setup_menu(self):
         self.menu = Menu(
             text_lines = [
-                "You are the white block and you must herd the green ",
-                "block (the rabbit) to the grey block in the maze.",
+                "You must herd the the rabbit to the exit in the maze. ",
                 "",
                 "The rabbit will try to keep a fixed distance away ",
                 "from you, so you'll have to strategically position ",
                 "yourself to herd the rabbit where you want it to go!",
                 "",
-                "Rabbits love carrots (orange blocks) and will run ",
-                "towards them when they are in range. The blue blocks ",
-                "will make both yourself and the rabbit move faster, ",
-                "similarly the red block will slow down movement."
+                "Rabbits love carrots and will run towards them.",
+                "Blue blocks will make both yourself or the rabbit ",
+                "move faster. The red blocks will slow down movement."
             ],
             is_modal = True,
             width = self.width - 200,
@@ -181,7 +179,7 @@ class Game:
         self.player.base_speed = 5
         self.player.max_acceleration = 10
         self.player.acceleration_rate = 0.25
-        self.player.shape_sprite = ShapeSprite("player", x, y, 3)
+        self.player.load_shape_sprite("player", 3)
     
     def add_rabbit(self, row, column):
         """
@@ -204,7 +202,7 @@ class Game:
         self.rabbit.max_acceleration = 8
         self.rabbit.movement_speed = 4
         self.rabbit.acceleration_rate = 0.5
-        self.rabbit.shape_sprite = ShapeSprite("rabbit", x, y, 3)
+        self.rabbit.load_shape_sprite("rabbit", 3)
     
     def remove_item(self, item):
         """
@@ -289,7 +287,7 @@ class Game:
             grid_layer = Layer.ITEMS.value, entity_type_id = EntityType.CARROT.value
         )
         item.on_collide = self.eat_carrot
-        item.shape_sprite = ShapeSprite("carrot", x, y, 3)
+        item.load_shape_sprite("carrot", 3)
     
     def eat_carrot(self, carrot, eater):
         """
@@ -316,6 +314,7 @@ class Game:
             False, self.items, Layer.WORLD.value
         )
         item.on_collide = self.check_end
+        item.load_shape_sprite("exit", 2)
     
     def check_end(self, goal, other):
         """

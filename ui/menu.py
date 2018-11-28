@@ -10,7 +10,7 @@ class Menu:
     def __init__(
             self,
             text_lines: List[str], is_modal: bool, width: int, height: int,
-            base_colour: Colour = Colour.DARK_GREY, ui_layout: UiLayout = UiLayout.MAIN_MENU, add_back_button: bool = True,
+            base_colour: Colour = Colour.GREY_DARK, ui_layout: UiLayout = UiLayout.MAIN_MENU, add_back_button: bool = True,
             button_width = 100, button_height = 30, button_padding = 5
     ):
         """
