@@ -66,10 +66,13 @@ class ScoutingEntity(MovableEntity):
         self.target_offset = self.original_target_offset
 
         # TODO: if we can get a path to any of them, then that's our destination for now just get the first
-        if len(nearby_interesting) > 0 and self.target == self.original_target:
-            self.movement_type = MovementType.PATH
-            self.target = int(nearby_interesting[0])
-            return Entity.all[nearby_interesting[0]]
+        if len(nearby_interesting) > 0:
+            if self.target == self.original_target:
+                self.movement_type = MovementType.PATH
+                self.target = int(nearby_interesting[0])
+                return Entity.all[nearby_interesting[0]]
+            else:
+                self.target_offset = 0
         else:
             if len(nearby_interesting) == 0:
                 self.target = self.original_target

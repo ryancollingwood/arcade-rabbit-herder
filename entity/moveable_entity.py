@@ -233,7 +233,10 @@ class MovableEntity(Entity):
             else:
                 # exisiting path if any if preserved
                 pass
-        
+
+        if self.movement_type == MovementType.NONE:
+            return None
+
         destination = None
         destination_entity = self.get_destination_target()
         

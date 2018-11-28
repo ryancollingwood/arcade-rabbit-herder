@@ -64,8 +64,8 @@ class Game:
                 "yourself to herd the rabbit where you want it to go!",
                 "",
                 "Rabbits love carrots and will run towards them.",
-                "Blue blocks will make both yourself or the rabbit ",
-                "move faster. The red blocks will slow down movement."
+                "Blue sweets will make both yourself or the rabbit ",
+                "move faster. The red potions will slow down movement."
             ],
             is_modal = True,
             width = self.width - 200,
@@ -227,6 +227,7 @@ class Game:
             False, self.items, grid_layer = Layer.ITEMS.value
         )
         item.on_collide = self.apply_speed_down
+        item.load_shape_sprite("speed_down", 3)
     
     def apply_speed_down(self, apply_from, apply_to):
         """
@@ -253,10 +254,11 @@ class Game:
         """
         x, y = self.grid.get_pixel_center(row, column)
         item = Entity(
-            x, y, int(self.tile_size - 2), int(self.tile_size - 2), Colour.LIGHT_BLUE, 5,
+            x, y, int(self.tile_size - 2), int(self.tile_size - 2), Colour.BLUE_LIGHT, 5,
             False, self.items, grid_layer = Layer.ITEMS.value
         )
         item.on_collide = self.apply_speed_up
+        item.load_shape_sprite("speed_up", 2)
     
     def apply_speed_up(self, apply_from, apply_to):
         """
@@ -314,7 +316,7 @@ class Game:
             False, self.items, Layer.WORLD.value
         )
         item.on_collide = self.check_end
-        item.load_shape_sprite("exit", 2)
+        item.load_shape_sprite("exit", 3)
     
     def check_end(self, goal, other):
         """
@@ -326,7 +328,10 @@ class Game:
         """
         if other.id != self.rabbit.id:
             return
+
         self.game_message = "Next Level!"
+        self.rabbit.movement_type = MovementType.NONE
+        self.rabbit.target = None
 
         if "change_level" not in self.timers:
             self.timers["change_level"] = Timer(2.0, self.change_level)

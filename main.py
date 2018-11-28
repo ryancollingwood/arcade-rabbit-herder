@@ -200,7 +200,10 @@ class MyGame(arcade.Window):
 
         # have the walls changed?
         self.shape_walls.draw()
-        
+
+        if game.rabbit.path:
+            self.draw_path(game.rabbit.path)
+
         if game.game_message != "":
             arcade.draw_text(
                 game.game_message,
@@ -248,9 +251,6 @@ class MyGame(arcade.Window):
         del npcs
         
         self.draw_entity(game.player)
-        
-        if game.rabbit.path:
-            self.draw_path(game.rabbit.path)
 
         # draw menus last so they appear on top of things
         self.draw_menu()
