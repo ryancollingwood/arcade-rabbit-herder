@@ -2,6 +2,7 @@ from warnings import warn
 from consts.colour import Colour
 from consts.direction import MovementDirection, DIRECTION_INVERSE
 from typing import List
+from shape_sprite import ShapeSprite
 
 
 class Entity:
@@ -50,6 +51,8 @@ class Entity:
         self.bottom_middle = None
         self.grid_pixels = None
         self.clip_distance = None
+        
+        self.shape_sprite: ShapeSprite = None
         
         self.refresh_dimensions()
         
@@ -107,6 +110,9 @@ class Entity:
         self.middle = (self.x, self.y)
         self.grid_pixels = Entity.grid.get_pos_for_pixels(self.x, self.y)
         self.clip_distance = self.width * 0.8
+        
+        if self.shape_sprite:
+            self.shape_sprite.update(self.x, self.y)
         
         # remove from the grid and re-add to new position
         Entity.grid - self.id

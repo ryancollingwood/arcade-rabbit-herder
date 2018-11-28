@@ -3,6 +3,7 @@ from typing import List
 from threading import Timer
 from grid import Grid
 from entity import MovableEntity, Entity, ScoutingEntity
+from shape_sprite import ShapeSprite
 from ui import Menu, Button
 from consts.movement_type import MovementType
 from consts import Colour
@@ -137,7 +138,7 @@ class Game:
         """
         self.reset_game()
 
-        with open(f"level_{self.level:02}.txt") as f:
+        with open(f"resources\level\{self.level:02}\layout.txt") as f:
             wall_lines = f.readlines()
         
         for row_index, row_value in enumerate(wall_lines):
@@ -180,6 +181,7 @@ class Game:
         self.player.base_speed = 5
         self.player.max_acceleration = 10
         self.player.acceleration_rate = 0.25
+        self.player.shape_sprite = ShapeSprite("player", x, y, 3)
     
     def add_rabbit(self, row, column):
         """
@@ -202,6 +204,7 @@ class Game:
         self.rabbit.max_acceleration = 8
         self.rabbit.movement_speed = 4
         self.rabbit.acceleration_rate = 0.5
+        self.rabbit.shape_sprite = ShapeSprite("rabbit", x, y, 3)
     
     def remove_item(self, item):
         """
@@ -286,6 +289,7 @@ class Game:
             grid_layer = Layer.ITEMS.value, entity_type_id = EntityType.CARROT.value
         )
         item.on_collide = self.eat_carrot
+        item.shape_sprite = ShapeSprite("carrot", x, y, 3)
     
     def eat_carrot(self, carrot, eater):
         """

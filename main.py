@@ -116,6 +116,12 @@ class MyGame(arcade.Window):
         :param entity:
         :return:
         """
+        
+        if entity.shape_sprite:
+            entity.shape_sprite.update(entity.x, SCREEN_HEIGHT - entity.y)
+            entity.shape_sprite.draw()
+            return
+        
         left = (entity.x - entity.half_width)
         right = (entity.x + entity.half_width)
         # because arcade 0 on y is the bottom of the screen not the top
