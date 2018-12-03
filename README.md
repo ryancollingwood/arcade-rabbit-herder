@@ -5,15 +5,23 @@ Simple herd the rabbit game with the arcade game framework (https://http://arcad
 
 ## Game Objective
 
-You are the white block and you must herd the green block (the rabbit) to the grey block in the maze.
+You must herd the the rabbit to the exit in the maze. 
+The rabbit will try to keep it's distance from you, so you'll have herd the rabbit where you want it to go!
 
-The rabbit will try to keep a fixed distance away from you, so you'll have to strategicially position yourself to herd the rabbit where you want it to go! Rabbits love carrots (orange blocks) and will run towards them when they are in range.
-The blue blocks will make both yourself and the rabbit move faster, similarly the red block will slow down movement.
+Rabbits love carrots and will run towards them.
+Pickup a carrot before the rabbit you can place the carrots to encourage the rabbit through the maze.
+Blue sweets will make both yourself or the rabbit move faster. The red potions will slow down movement.
+
+### Keys
+- `↑ ↓ ← →` to move/select",
+- `SPACE` to place a carrot",
+- `ESCAPE` to bring up this menu",
+- `ENTER` to start",
 
 # Fun things you could do!
 - Modify a level (`resources/level/01/layout.txt`) and see what changes in the game!
 - Fork this repo and remix to your hearts content.
-- If you have an artisitc flair make some sprites for the rabbit and related entities!
+- If you have an artistic flair make some sprites for the rabbit and related entities!
 
 ## Development Objective
 
@@ -26,10 +34,10 @@ I opted to have fairly fat classes, rather than going for a factory or a MVC app
 
 ## Future Goals
 - [X] Add Menus
+- [X] Give the player the player the ability to place carrots
+- [X] Implement basic primitive shape sprites
 - [ ] Add more levels
 - [ ] Add more items
-- [ ] Give the player the player the ability to place carrots
-- [ ] Implement basic primitive shape sprites
 
 ## Stretch Goals
 - [ ] Animated sprites 
