@@ -45,6 +45,7 @@ class Game:
         self.walls: List[Entity] = []
         self.timers = {}
         self.score: int = 0
+        self.held_carrots: int = 0
         self.game_message: str = ""
         self.debug_message: str = ""
         
@@ -93,6 +94,7 @@ class Game:
             self.timers[timer].cancel()
         self.timers = {}
         self.score = 0
+        self.held_carrots = 0
         self.game_message = ""
         self.debug_message = ""
         
@@ -297,7 +299,8 @@ class Game:
         :return:
         """
         x, y = self.grid.get_pixel_center(row, column)
-        self.place_carrot(x, y)
+        carrot = self.place_carrot(x, y)
+        carrot.player_placed = False
 
     def place_carrot(self, x, y):
         """
@@ -312,14 +315,18 @@ class Game:
         )
         item.on_collide = self.eat_carrot
         item.load_shape_sprite("carrot", 3)
+        return item
 
     def player_drop_carrot(self):
         """
         Place a carrot at the players position
         :return:
         """
-        x, y = self.player.grid_pixels
-        self.place_carrot(x, y)
+        if self.held_carrots > 0:
+            self.held_carrots -= 1
+            x, y = self.player.grid_pixels
+            carrot = self.place_carrot(x, y)
+            carrot.player_placed = True
 
     def eat_carrot(self, carrot, eater):
         """
@@ -328,11 +335,18 @@ class Game:
         :param eater:
         :return:
         """
-        if eater.id != self.rabbit.id:
+        if eater.id not in [self.rabbit.id, self.player.id]:
             return
+
+        if eater.id == self.rabbit.id:
+            self.score += 1
+        elif eater.id == self.player.id:
+            if carrot.player_placed:
+                return
+            self.held_carrots += 1
+
         self.remove_item(carrot)
-        self.score += 1
-    
+
     def add_end(self, row, column):
         """
         Add the end/goal to the game map

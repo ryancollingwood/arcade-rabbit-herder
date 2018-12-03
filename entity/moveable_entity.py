@@ -41,6 +41,7 @@ class MovableEntity(Entity):
         self.acceleration_rate = 0.01
         self.path = None
         self.path_step = None
+        self.find_path_if_stuck = False
     
     def think(self, frame_count):
         """
@@ -161,12 +162,11 @@ class MovableEntity(Entity):
 
     def find_chasing_path(self, result):
         """
-        As a chasing entity are we able to move towards our target? If not then use path finding to stop us from getting
-        stuck
+        Are able to move towards our target? If not then use path finding to stop us from getting stuck
         :param result:
         :return:
         """
-        if self.movement_type == MovementType.CHASE:
+        if self.find_path_if_stuck:
             destination_entity = Entity.all[self.target]
 
             if not result:

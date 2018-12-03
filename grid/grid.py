@@ -62,7 +62,6 @@ class Grid:
         # perhaps a dictionary?
         self.number_of_layers = number_of_layers
         self.data = np.reshape(np.zeros((y_max * x_max) * number_of_layers), (number_of_layers, (y_max * x_max)))
-        print(self.data.shape)
 
         # let's keep the last row, column values to minimise repeated lookups
         self.last_x = None

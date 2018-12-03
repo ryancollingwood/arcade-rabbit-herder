@@ -234,10 +234,9 @@ class MyGame(arcade.Window):
             )
 
         try:
-            scores = "Score: {a} - Herder Speed: {b:.2f} - Rabbit Speed: {c:.2f}".format(
+            scores = "Score: {a} - Held Carrots: {b}".format(
                 a = game.score,
-                b = game.player.speed,
-                c = game.rabbit.speed,
+                b = game.held_carrots,
             )
         except AttributeError:
             pass
