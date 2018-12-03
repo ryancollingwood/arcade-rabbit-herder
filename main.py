@@ -1,15 +1,12 @@
 # Library imports
-from typing import List
 import arcade
 
 from game import Game
 from entity import Entity
 from shape_sprite import ShapeSprite
 from ui import Menu
-from consts.movement_type import MovementType
 from consts.colour import Colour
-from entity import MovableEntity
-from consts.direction import MovementDirection
+from consts import Keys
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -35,7 +32,27 @@ COLOUR_MAP = {
     Colour.BROWN.value: arcade.color.BROWN,
 }
 
-print(COLOUR_MAP)
+KEY_MAP = {
+    arcade.key.UP: Keys.UP,
+    arcade.key.DOWN: Keys.DOWN,
+    arcade.key.LEFT: Keys.LEFT,
+    arcade.key.RIGHT: Keys.RIGHT,
+
+    arcade.key.SPACE: Keys.SPACE,
+    arcade.key.ESCAPE: Keys.ESCAPE,
+    arcade.key.RETURN: Keys.RETURN,
+
+    arcade.key.W: Keys.W,
+    arcade.key.S: Keys.S,
+    arcade.key.A: Keys.A,
+    arcade.key.D: Keys.D,
+
+    arcade.key.R: Keys.R,
+    arcade.key.X: Keys.X,
+    arcade.key.COMMA: Keys.COMMA,
+    arcade.key.PERIOD: Keys.PERIOD,
+}
+
 
 class MyGame(arcade.Window):
     
@@ -304,47 +321,17 @@ class MyGame(arcade.Window):
         """
         if not self.game.is_running:
             return
-        
-        player = self.game.player
-        rabbit = self.game.rabbit
 
-        if not self.game.menu.is_visible:
-            if key == arcade.key.LEFT:
-                player.set_direction(MovementDirection.WEST)
-            elif key == arcade.key.RIGHT:
-                player.set_direction(MovementDirection.EAST)
-            elif key == arcade.key.UP:
-                player.set_direction(MovementDirection.NORTH)
-            elif key == arcade.key.DOWN:
-                player.set_direction(MovementDirection.SOUTH)
-            elif key == arcade.key.R:
-                self.reset_level()
+        if key == arcade.key.R:
+            self.reset_level()
 
-        if self.debug:
-            # debug stuffs
-            if key == arcade.key.PERIOD:
-                player.tick_rate -= 1
-            elif key == arcade.key.COMMA:
-                player.tick_rate += 1
-            elif key == arcade.key.W:
-                rabbit.movement_type = MovementType.NONE
-                rabbit.target = None
-                rabbit.move_up()
-            elif key == arcade.key.A:
-                rabbit.movement_type = MovementType.NONE
-                rabbit.target = None
-                rabbit.move_left()
-            elif key == arcade.key.D:
-                rabbit.movement_type = MovementType.NONE
-                rabbit.target = None
-                rabbit.move_right()
-            elif key == arcade.key.S:
-                rabbit.movement_type = MovementType.NONE
-                rabbit.target = None
-                rabbit.move_down()
-            elif key == arcade.key.X:
-                self.game.start_rabbit()
-    
+        try:
+            game_key = KEY_MAP[key]
+        except KeyError:
+            return
+
+        self.game.on_key_press(game_key)
+
     def on_key_release(self, key, modifiers):
         """
         Called whenever the user lets off a previously pressed key.
@@ -352,38 +339,14 @@ class MyGame(arcade.Window):
         :param modifiers:
         :return:
         """
-        
-        player: MovableEntity = self.game.player
-        menu: Menu = self.game.menu
 
-        if not self.game.menu.is_visible:
-            if key == arcade.key.LEFT:
-                if player.movement_direction == MovementDirection.WEST:
-                    player.set_direction(MovementDirection.NONE)
-            elif key == arcade.key.RIGHT:
-                if player.movement_direction == MovementDirection.EAST:
-                    player.set_direction(MovementDirection.NONE)
-            elif key == arcade.key.UP:
-                if player.movement_direction == MovementDirection.NORTH:
-                    player.set_direction(MovementDirection.NONE)
-            elif key == arcade.key.DOWN:
-                if player.movement_direction == MovementDirection.SOUTH:
-                    player.set_direction(MovementDirection.NONE)
-            elif key == arcade.key.C:
-                self.game.player_drop_carrot()
-        else:
-            if key == arcade.key.UP:
-                menu.decrement_selected_button()
-            elif key == arcade.key.DOWN:
-                menu.increment_selected_button()
-            elif key == arcade.key.ENTER:
-                menu.click_selected_button()
+        try:
+            game_key = KEY_MAP[key]
+        except KeyError:
+            return
 
-        if key == arcade.key.ESCAPE:
-            # resetting the back button text to override the value set at the start
-            self.game.menu.button_list[0].text = "Back"
-            self.game.menu.is_visible = not self.game.menu.is_visible
-            
+        self.game.on_key_release(game_key)
+
     def get_menu_for_display(self):
         """
         Get the current menu (if any) for display

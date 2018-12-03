@@ -3,12 +3,14 @@ from typing import List
 from threading import Timer
 from grid import Grid
 from entity import MovableEntity, Entity, ScoutingEntity
+from consts.direction import MovementDirection
 from shape_sprite import ShapeSprite
 from ui import Menu, Button
 from consts.movement_type import MovementType
 from consts import Colour
 from consts import Layer
 from consts import EntityType
+from consts import Keys
 
 
 class Game:
@@ -27,6 +29,7 @@ class Game:
         :param flip_y: Do we want to flip the position of y pixels, default 0 is the top increasing towards the bottom
         """
         self.is_running: bool = False
+        self.debug: bool = True
         self.level = 1
         self.width: int = width
         self.height: int = height
@@ -101,6 +104,11 @@ class Game:
         Entity.grid = self.grid
 
     def menu_reset_game(self, button):
+        """
+        Handle the reset menu button press
+        :param button:
+        :return:
+        """
         self.menu.close_menu(button)
         self.load_level()
 
@@ -108,6 +116,11 @@ class Game:
         sys.exit(0)
 
     def update_game(self, delta_time):
+        """
+        Update the game state based on the elapsed time
+        :param delta_time:
+        :return:
+        """
         if not self.is_running:
             return False
         
@@ -287,6 +300,12 @@ class Game:
         self.place_carrot(x, y)
 
     def place_carrot(self, x, y):
+        """
+        Place a carrot at a given x,y position
+        :param x:
+        :param y:
+        :return:
+        """
         item = Entity(
             x, y, int(self.tile_size - 2), int(self.tile_size - 2), Colour.ORANGE, 5, False, self.items,
             grid_layer = Layer.ITEMS.value, entity_type_id = EntityType.CARROT.value
@@ -295,6 +314,10 @@ class Game:
         item.load_shape_sprite("carrot", 3)
 
     def player_drop_carrot(self):
+        """
+        Place a carrot at the players position
+        :return:
+        """
         x, y = self.player.grid_pixels
         self.place_carrot(x, y)
 
@@ -345,6 +368,10 @@ class Game:
             self.timers["change_level"].start()
 
     def change_level(self):
+        """
+        Change to the next level
+        :return:
+        """
         self.timers["change_level"].cancel()
         self.is_running = False
         self.level += 1
@@ -360,7 +387,6 @@ class Game:
     def add_wall(self, row, column):
         """
         Add a wall to the game world
-        DEPRECIATED - Walls are being rendered as a single shape
         :param row:
         :param column:
         :return:
@@ -394,3 +420,97 @@ class Game:
         ))
         
         self.game_message = str(self.rabbit.destination)
+
+    def reset_level(self):
+        """
+        Reset the current level
+        :return:
+        """
+        self.load_level()
+
+    def on_key_press(self, key):
+        """
+        Respond to key press
+
+        :param key:
+        :return:
+        """
+        if not self.is_running:
+            return
+
+        player = self.player
+        rabbit = self.rabbit
+
+        if not self.menu.is_visible:
+            if key == Keys.LEFT:
+                player.set_direction(MovementDirection.WEST)
+            elif key == Keys.RIGHT:
+                player.set_direction(MovementDirection.EAST)
+            elif key == Keys.UP:
+                player.set_direction(MovementDirection.NORTH)
+            elif key == Keys.DOWN:
+                player.set_direction(MovementDirection.SOUTH)
+            elif key == Keys.R:
+                self.reset_level()
+
+        if self.debug:
+            # debug stuffs
+            if key == Keys.PERIOD:
+                player.tick_rate -= 1
+            elif key == Keys.COMMA:
+                player.tick_rate += 1
+            elif key == Keys.W:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_up()
+            elif key == Keys.A:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_left()
+            elif key == Keys.D:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_right()
+            elif key == Keys.S:
+                rabbit.movement_type = MovementType.NONE
+                rabbit.target = None
+                rabbit.move_down()
+            elif key == Keys.X:
+                self.start_rabbit()
+
+    def on_key_release(self, key):
+        """
+        Respond to key release
+        :param key:
+        :return:
+        """
+        player: MovableEntity = self.player
+        menu: Menu = self.menu
+
+        if not self.menu.is_visible:
+            if key == Keys.LEFT:
+                if player.movement_direction == MovementDirection.WEST:
+                    player.set_direction(MovementDirection.NONE)
+            elif key == Keys.RIGHT:
+                if player.movement_direction == MovementDirection.EAST:
+                    player.set_direction(MovementDirection.NONE)
+            elif key == Keys.UP:
+                if player.movement_direction == MovementDirection.NORTH:
+                    player.set_direction(MovementDirection.NONE)
+            elif key == Keys.DOWN:
+                if player.movement_direction == MovementDirection.SOUTH:
+                    player.set_direction(MovementDirection.NONE)
+            elif key == Keys.SPACE:
+                self.player_drop_carrot()
+        else:
+            if key == Keys.UP:
+                menu.decrement_selected_button()
+            elif key == Keys.DOWN:
+                menu.increment_selected_button()
+            elif key == Keys.RETURN:
+                menu.click_selected_button()
+
+        if key == Keys.ESCAPE:
+            # resetting the back button text to override the value set at the start
+            self.menu.button_list[0].text = "Back"
+            self.menu.is_visible = not self.menu.is_visible
