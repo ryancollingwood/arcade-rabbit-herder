@@ -13,15 +13,16 @@ Pickup a carrot before the rabbit you can place the carrots to encourage the rab
 Blue sweets will make both yourself or the rabbit move faster. The red potions will slow down movement.
 
 ### Keys
-- `↑ ↓ ← →` to move/select",
-- `SPACE` to place a carrot",
-- `ESCAPE` to bring up this menu",
-- `ENTER` to start",
+- `↑ ↓ ← →` to move/select
+- `SPACE` to place a carrot
+- `ESCAPE` to bring up this menu
+- `ENTER` to start
 
 # Fun things you could do!
 - Modify a level (`resources/level/01/layout.txt`) and see what changes in the game!
-- Fork this repo and remix to your hearts content.
+- Fork this repo and remix to your hearts content!
 - If you have an artistic flair make some sprites for the rabbit and related entities!
+- Raise ticket with an idea for additional items!
 
 ## Development Objective
 
