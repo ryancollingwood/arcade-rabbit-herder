@@ -63,7 +63,7 @@ class ShapeSprite:
                     value = int(value)
                 except ValueError:
                     # we'll not warn about empty values as that is transparency
-                    if value != '':
+                    if value.strip() != '':
                         warn(f"Excepted a integer, found '{value}' instead when loading ShapeSprite: {self.name}")
                     continue
                 
