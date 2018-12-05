@@ -1,5 +1,5 @@
 import arcade
-
+from warnings import warn
 
 class ShapeSprite:
     # TODO: Move all arcade specific stuff out of this
@@ -8,10 +8,10 @@ class ShapeSprite:
         """
         Create an object describing a sprite that is a shape consisting of multiple blocks
         
-        :param name:
-        :param position_x:
-        :param position_y:
-        :param square_size:
+        :param name: The directory in which the `shape.txt` is located
+        :param position_x: What is the x position we will draw the shape
+        :param position_y: What is the y position we will draw the shape
+        :param square_size: What is the size of each block in px
         """
         
         self.name = name
@@ -32,32 +32,19 @@ class ShapeSprite:
             self.lines = f.readlines()
 
         self.create_shape_list()
+        # now that we have `width` and `height` as determined in `create_shape_list` reposition the center
+        self.update(position_x, position_y)
     
     def create_shape_list(self):
+        """
+        Read the `shape.txt` and build the point and colour lists we will use to create a shapelist for rendering
+        
+        :return:
+        """
         self.shape_list = arcade.ShapeElementList()
         
         point_list = []
         color_list = []
-        
-        """
-        colour_codes = [
-            arcade.color.BLACK,  # 0
-            arcade.color.BLUE,  # 1
-            arcade.color.GREEN,  # 2
-            arcade.color.CYAN,  # 3
-            arcade.color.RED,  # 4
-            arcade.color.MAGENTA,  # 5
-            arcade.color.BROWN,  # 6
-            arcade.color.LIGHT_GRAY,  # 7
-            arcade.color.DARK_GRAY,  # 8
-            arcade.color.LIGHT_BLUE,  # 9
-            arcade.color.LIGHT_GREEN,  # 10
-            arcade.color.LIGHT_CYAN,  # 11
-            arcade.color.LIGHT_RED_OCHRE,  # 12
-            arcade.color.LIGHT_MEDIUM_ORCHID,  # 13
-            arcade.color.WHITE
-        ]
-        """
         
         self.height = self.square_size * len(self.lines)
         
@@ -75,6 +62,9 @@ class ShapeSprite:
                 try:
                     value = int(value)
                 except ValueError:
+                    # we'll not warn about empty values as that is transparency
+                    if value != '':
+                        warn(f"Excepted a integer, found '{value}' instead when loading ShapeSprite: {self.name}")
                     continue
                 
                 top_left = (column_index * self.square_size, line_index * self.square_size)
