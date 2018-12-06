@@ -12,7 +12,9 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 TILE_SIZE = 25
 
-VIEW_PORT_MARGIN = 100
+VIEW_PORT_WIDTH_MARGIN = SCREEN_WIDTH // 2
+VIEW_PORT_HEIGHT_MARGIN = SCREEN_HEIGHT // 2
+
 VIEW_PORT_SCALING = 1.5
 
 COLOUR_MAP = {
@@ -182,7 +184,7 @@ class MyGame(arcade.Window):
         
         self.entities_shapelist[entity.id] = entity_shapelist
         
-    def update_screen_boundary(self, focus_top, focus_right, focus_bottom, focus_left):
+    def update_screen_boundary(self, focus_entity):
         """
         Given an area we want to focus on i.e. the player bounding box, do we need to scroll the viewport?
         
@@ -193,32 +195,39 @@ class MyGame(arcade.Window):
         :param focus_left:
         :return:
         """
-        
+
+        top_left, top_right, bottom_right, bottom_left = self.get_entity_dimensions(focus_entity)
+
+        focus_top = top_left[1]
+        focus_right = top_right[0]
+        focus_bottom = bottom_right[1]
+        focus_left = bottom_left[0]
+
         # --- Manage Scrolling ---
         # Track if we need to change the viewport
 
         changed = False
 
         # Scroll left
-        left_bndry = self.view_left + VIEW_PORT_MARGIN
+        left_bndry = self.view_left + VIEW_PORT_WIDTH_MARGIN
         if focus_left < left_bndry:
             self.view_left -= left_bndry - focus_left
             changed = True
 
         # Scroll right
-        right_bndry = self.view_left + SCREEN_WIDTH - VIEW_PORT_MARGIN
+        right_bndry = self.view_left + SCREEN_WIDTH - VIEW_PORT_WIDTH_MARGIN
         if focus_right > right_bndry:
             self.view_left += focus_right - right_bndry
             changed = True
 
         # Scroll up
-        top_bndry = self.view_bottom + SCREEN_HEIGHT - VIEW_PORT_MARGIN
+        top_bndry = self.view_bottom + SCREEN_HEIGHT - VIEW_PORT_HEIGHT_MARGIN
         if focus_top > top_bndry:
             self.view_bottom += focus_top - top_bndry
             changed = True
 
         # Scroll down
-        bottom_bndry = self.view_bottom + VIEW_PORT_MARGIN
+        bottom_bndry = self.view_bottom + VIEW_PORT_HEIGHT_MARGIN
         if focus_bottom < bottom_bndry:
             self.view_bottom -= bottom_bndry - focus_bottom
             changed = True
@@ -368,12 +377,7 @@ class MyGame(arcade.Window):
         
         player: Entity = game.player
         
-        self.update_screen_boundary(
-            focus_top = player.top_middle[1],
-            focus_right = player.middle_right[0],
-            focus_bottom = player.bottom_middle[1],
-            focus_left = player.middle_left[0]
-        )
+        self.update_screen_boundary(player)
 
     def on_key_press(self, key, modifiers):
         """
