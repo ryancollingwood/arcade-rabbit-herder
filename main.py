@@ -77,8 +77,8 @@ class MyGame(arcade.Window):
         
         # Set the viewport boundaries
         # These numbers set where we have 'scrolled' to.
-        self.view_left = 0
-        self.view_bottom = 0
+        self.view_left: int = 0
+        self.view_bottom: int = 0
     
     def setup(self):
         """
@@ -441,7 +441,8 @@ class MyGame(arcade.Window):
             return
 
         menu_center_x, menu_center_y, menu_cords = self.get_menu_coords(menu)
-        
+
+
         arcade.draw_rectangle_filled(
             menu_center_x, menu_center_y,
             menu.width, menu.height,
@@ -478,8 +479,8 @@ class MyGame(arcade.Window):
         :return:
         """
         
-        menu_center_x = (self.width // 2)
-        menu_center_y = (self.height // 2)
+        menu_center_x = (self.width // 2) + self.view_left
+        menu_center_y = (self.height // 2) + self.view_bottom
         # get a mapping of the menu co-ordinates for relative positioning of things inside the menu
         menu_cords = (
             (menu_center_x - (menu.width // 2), menu_center_y + (menu.height // 2)),
@@ -502,12 +503,12 @@ class MyGame(arcade.Window):
         """
         
         # adapted from http://arcade.academy/examples/gui_text_button.html#gui-text-button
-        screen_button_center_x = (SCREEN_WIDTH - button.center_x - relative_x)
-        screen_button_center_y = menu_height + (SCREEN_HEIGHT - button.center_y - relative_y)
+        screen_button_center_x = (SCREEN_WIDTH - button.center_x - relative_x) + self.view_left
+        screen_button_center_y = (menu_height + SCREEN_HEIGHT - button.center_y - relative_y) + self.view_bottom
 
         arcade.draw_rectangle_filled(
-            screen_button_center_x, screen_button_center_y,
-
+            screen_button_center_x,
+            screen_button_center_y,
             button.width, button.height,
             COLOUR_MAP[button.face_color]
         )

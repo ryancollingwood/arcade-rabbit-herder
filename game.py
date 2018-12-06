@@ -31,8 +31,8 @@ class Game:
         self.is_running: bool = False
         self.debug: bool = True
         self.level = 1
-        self.width: int = width
-        self.height: int = height
+        self.resolution_width: int = width
+        self.resolution_height: int = height
         self.tile_size: float = tile_size
         self.grid_layers: int = grid_layers
         self.flip_x: bool = flip_x
@@ -78,8 +78,8 @@ class Game:
                 "    ENTER to start",
             ],
             is_modal = True,
-            width = self.width - 200,
-            height = self.height - 200
+            width =self.resolution_width - 200,
+            height =self.resolution_height - 200
         )
 
         self.menu.add_button("Restart", None, self.menu_reset_game)
@@ -103,11 +103,18 @@ class Game:
         self.held_carrots = 0
         self.game_message = ""
         self.debug_message = ""
-        
-        # reset and reassign the grid
-        x_max = (self.width // self.tile_size) + 1
-        y_max = (self.height // self.tile_size) + 1
-        
+
+    def setup_grid(self, x_max, y_max):
+        """
+        Reset the game grid
+
+        :param x_max: horizontal size of the grid in pixels
+        :param y_max: vertical size of the grid in pixels
+        :return:
+        """
+        if self.grid:
+            del self.grid
+
         self.grid = Grid(x_max, y_max, self.tile_size, self.grid_layers, self.flip_x, self.flip_y)
         Entity.grid = self.grid
 
@@ -159,8 +166,22 @@ class Game:
 
         with open(f"resources\level\{self.level:02}\layout.txt") as f:
             wall_lines = f.readlines()
-        
+
+        game_height = len(wall_lines)
+        game_width = 0
+
+        # get the maximum width of tiles so we can setup our grid
         for row_index, row_value in enumerate(wall_lines):
+            if len(row_value) > game_width:
+                game_width = len(row_value)
+
+        self.setup_grid(game_width * self.tile_size, game_height * self.tile_size)
+
+        for row_index, row_value in enumerate(wall_lines):
+
+            if len(row_value) > game_width:
+                row_value = game_width
+
             for col_index, col_value in enumerate(row_value):
                 if col_value == "#":
                     self.add_wall(row_index, col_index)
