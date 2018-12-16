@@ -28,7 +28,7 @@ class ShapeSprite:
         self.point_list = None
         self.color_list = None
         
-        with open(f"resources\shape_sprite\{name}\shape.txt") as f:
+        with open(f"resources\\shape_sprite\\{name}\\shape.txt") as f:
             self.lines = f.readlines()
 
         self.create_shape_list()

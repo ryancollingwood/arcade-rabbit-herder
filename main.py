@@ -133,7 +133,7 @@ class MyGame(arcade.Window):
     
     def get_entity_dimensions(self, entity: Entity):
         """
-        Remap the co-ordinates from the grid to positions required by aracade.
+        Remap the co-ordinates from the grid to positions required by arcade.
         As 0,0 is the bottom left position in arcade, but the grid see's 0,0 as top left
         
         :param entity:

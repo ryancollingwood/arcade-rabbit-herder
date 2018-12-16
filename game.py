@@ -157,7 +157,7 @@ class Game:
         """
         self.reset_game()
 
-        with open(f"resources\level\{self.level:02}\layout.txt") as f:
+        with open(f"resources\\level\\{self.level:02}\layout.txt") as f:
             wall_lines = f.readlines()
         
         for row_index, row_value in enumerate(wall_lines):
