@@ -1,5 +1,5 @@
 # arcade-rabbit-herder
-Simple herd the rabbit game with the arcade game framework (https://http://arcade.academy and https://github.com/pvcraven/arcade)
+Simple herd the rabbit game with the arcade game framework (https://arcade.academy and https://github.com/pvcraven/arcade)
 
 ![alt text](https://raw.githubusercontent.com/ryancollingwood/arcade-rabbit-herder/master/resources/static/preview.gif "Rabbit Herder Preview")
 
