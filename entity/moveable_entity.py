@@ -172,7 +172,7 @@ class MovableEntity(Entity):
             if not result:
                 if not self.path or destination_entity.grid_pixels not in self.path:
                     path_to_target = self.get_path(destination_entity.grid_pixels[0], destination_entity.grid_pixels[1])
-                    if destination_entity.grid_pixels in path_to_target:
+                    if path_to_target is not None and destination_entity.grid_pixels in path_to_target:
                         self.reset_path(path_to_target)
                     else:
                         # warn("couldn’t get back on track")
