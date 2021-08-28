@@ -338,8 +338,9 @@ class MovableEntity(Entity):
         if start_row and start_column and end_row and end_column:
             path = astar(Entity.grid.grid_for_pathing(), (start_row, start_column), (end_row, end_column))
             
-            # convert from row,col to pixels
-            return [Entity.grid.get_pixel_center(p[0], p[1]) for p in path]
+            if path:
+                # convert from row,col to pixels
+                return [Entity.grid.get_pixel_center(p[0], p[1]) for p in path]
         
         return None
     
