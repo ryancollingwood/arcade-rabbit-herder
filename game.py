@@ -29,6 +29,7 @@ class Game:
         :param flip_y: Do we want to flip the position of y pixels, default 0 is the top increasing towards the bottom
         """
         self.is_running: bool = False
+        self.exit: bool = False
         self.debug: bool = True
         self.level = 1
         self.width: int = width
@@ -121,7 +122,7 @@ class Game:
         self.load_level()
 
     def quit(self, button):
-        sys.exit(0)
+        self.exit = True
 
     def update_game(self, delta_time):
         """

@@ -299,6 +299,9 @@ class MyGame(arcade.Window):
 
         # Call draw() on all your sprite lists below
         game = self.game
+
+        if game.exit:
+            arcade.close_window()
         
         if not game.is_running:
             return
